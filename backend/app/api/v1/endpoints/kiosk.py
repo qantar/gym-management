@@ -1,13 +1,15 @@
 """
-Kiosk mode endpoints — optimized for full-screen self-service check-in terminal.
-Returns minimal data for fast display.
+Kiosk mode — unauthenticated check-in terminal.
+Rate limited: max 10 attempts per IP per minute.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from datetime import date, datetime, timezone
 from pydantic import BaseModel
 from typing import Optional
+from collections import defaultdict
+import time
 
 from app.core.database import get_db
 from app.models.member import Member, MemberStatus
@@ -17,116 +19,166 @@ from app.core.websocket import ws_manager
 
 router = APIRouter()
 
+# Simple in-memory rate limiter: ip -> list of timestamps
+_rate_store: dict[str, list[float]] = defaultdict(list)
+_RATE_LIMIT = 20       # max attempts
+_RATE_WINDOW = 60.0    # per second window
+
+
+def _check_rate_limit(ip: str) -> None:
+    now = time.monotonic()
+    timestamps = _rate_store[ip]
+    # Prune old
+    _rate_store[ip] = [t for t in timestamps if now - t < _RATE_WINDOW]
+    if len(_rate_store[ip]) >= _RATE_LIMIT:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many check-in attempts. Please wait a minute.",
+        )
+    _rate_store[ip].append(now)
+
 
 class KioskCheckin(BaseModel):
     branch_id: int
-    identifier: str          # QR code, RFID, or member_id string
-    method: str = "qr"       # qr, rfid, pin, manual
+    identifier: str
+    method: str = "qr"   # qr, rfid, pin, manual
+
+
+def _method_enum(method: str) -> CheckinMethod:
+    return {
+        "qr": CheckinMethod.QR,
+        "rfid": CheckinMethod.RFID,
+        "pin": CheckinMethod.PIN,
+    }.get(method, CheckinMethod.MANUAL)
 
 
 @router.post("/checkin")
-async def kiosk_checkin(payload: KioskCheckin, db: AsyncSession = Depends(get_db)):
-    """Unauthenticated kiosk check-in — returns member greeting card."""
-    member = None
-    method = payload.method
+async def kiosk_checkin(
+    payload: KioskCheckin,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Public kiosk check-in endpoint with rate limiting."""
+    client_ip = request.client.host if request.client else "unknown"
+    _check_rate_limit(client_ip)
 
-    if method in ("qr", "manual"):
+    # Resolve member
+    member = None
+    if payload.method == "qr":
         r = await db.execute(select(Member).where(Member.qr_code == payload.identifier))
         member = r.scalar_one_or_none()
-        if not member and method == "manual":
-            # Try member_id string
-            r2 = await db.execute(select(Member).where(Member.member_id == payload.identifier))
-            member = r2.scalar_one_or_none()
-    elif method == "rfid":
+    elif payload.method == "rfid":
         r = await db.execute(select(Member).where(Member.rfid_tag == payload.identifier))
         member = r.scalar_one_or_none()
-    elif method == "pin":
-        r = await db.execute(select(Member).where(Member.pin_code == payload.identifier, Member.branch_id == payload.branch_id))
+    elif payload.method == "pin":
+        r = await db.execute(select(Member).where(
+            Member.pin_code == payload.identifier,
+            Member.branch_id == payload.branch_id,
+        ))
         member = r.scalar_one_or_none()
+    else:  # manual — try member_id string
+        r = await db.execute(select(Member).where(Member.member_id == payload.identifier))
+        member = r.scalar_one_or_none()
+        if not member:
+            try:
+                mid = int(payload.identifier)
+                r2 = await db.execute(select(Member).where(Member.id == mid))
+                member = r2.scalar_one_or_none()
+            except ValueError:
+                pass
 
     if not member:
-        return {"success": False, "message": "Member not found", "type": "error"}
+        return {"success": False, "type": "error", "message": "Member not found. Please see front desk."}
 
     if member.status != MemberStatus.ACTIVE:
         return {
-            "success": False,
-            "message": f"Membership is {member.status.value}",
-            "type": "warning",
+            "success": False, "type": "warning",
+            "message": f"Your membership is {member.status.value}. Please see front desk.",
             "member_name": f"{member.first_name} {member.last_name}",
         }
 
-    # Check active membership
-    ms_r = await db.execute(
-        select(Membership).where(Membership.member_id == member.id, Membership.status == MembershipStatus.ACTIVE)
-    )
-    membership = ms_r.scalar_one_or_none()
-    if not membership:
+    # Active membership check
+    ms = (await db.execute(
+        select(Membership).where(
+            Membership.member_id == member.id,
+            Membership.status == MembershipStatus.ACTIVE,
+        )
+    )).scalar_one_or_none()
+
+    if not ms:
         return {
-            "success": False,
-            "message": "No active membership",
-            "type": "warning",
+            "success": False, "type": "warning",
+            "message": "No active membership found. Please see front desk.",
             "member_name": f"{member.first_name} {member.last_name}",
         }
 
-    # Duplicate check
+    # Already checked in today?
     today = date.today()
-    dup = await db.execute(
+    existing = (await db.execute(
         select(AttendanceLog).where(
             AttendanceLog.member_id == member.id,
             AttendanceLog.branch_id == payload.branch_id,
             AttendanceLog.check_out == None,
             func.date(AttendanceLog.check_in) == today,
         )
-    )
-    if dup.scalar_one_or_none():
+    )).scalar_one_or_none()
+
+    if existing:
         return {
-            "success": True,
-            "message": "Already checked in",
-            "type": "info",
+            "success": True, "type": "info",
+            "message": f"Welcome back, {member.first_name}! Already checked in.",
             "member_name": f"{member.first_name} {member.last_name}",
             "member_id": member.member_id,
         }
 
+    # Create log
     log = AttendanceLog(
-        member_id=member.id, branch_id=payload.branch_id,
+        member_id=member.id,
+        branch_id=payload.branch_id,
         check_in=datetime.now(timezone.utc),
-        method=CheckinMethod.QR if method == "qr" else CheckinMethod.RFID if method == "rfid" else CheckinMethod.PIN if method == "pin" else CheckinMethod.MANUAL,
+        method=_method_enum(payload.method),
     )
     member.total_checkins += 1
     db.add(log)
     await db.commit()
+    await db.refresh(log)
 
     # Broadcast to dashboard
     await ws_manager.broadcast_to_branch(payload.branch_id, "checkin", {
-        "member_id": member.id, "member_name": f"{member.first_name} {member.last_name}",
-        "method": method, "has_active_membership": True, "log_id": log.id,
+        "member_id": member.id,
+        "member_name": f"{member.first_name} {member.last_name}",
+        "method": payload.method,
+        "has_active_membership": True,
+        "log_id": log.id,
         "check_in": log.check_in.isoformat(),
     })
 
     return {
-        "success": True,
-        "type": "success",
+        "success": True, "type": "success",
         "message": f"Welcome, {member.first_name}! 👋",
         "member_name": f"{member.first_name} {member.last_name}",
         "member_id": member.member_id,
         "photo_url": member.photo_url,
-        "membership_expires": str(membership.end_date),
+        "membership_expires": str(ms.end_date),
         "total_checkins": member.total_checkins,
     }
 
 
 @router.get("/stats/{branch_id}")
 async def kiosk_stats(branch_id: int, db: AsyncSession = Depends(get_db)):
-    """Public stats for kiosk display."""
+    """Public stats for kiosk display header."""
     today = date.today()
-    count = (await db.execute(
+    total = (await db.execute(
         select(func.count(AttendanceLog.id)).where(
-            AttendanceLog.branch_id == branch_id, func.date(AttendanceLog.check_in) == today,
+            AttendanceLog.branch_id == branch_id,
+            func.date(AttendanceLog.check_in) == today,
         )
-    )).scalar()
+    )).scalar() or 0
     in_gym = (await db.execute(
         select(func.count(AttendanceLog.id)).where(
-            AttendanceLog.branch_id == branch_id, func.date(AttendanceLog.check_in) == today, AttendanceLog.check_out == None,
+            AttendanceLog.branch_id == branch_id,
+            func.date(AttendanceLog.check_in) == today,
+            AttendanceLog.check_out == None,
         )
-    )).scalar()
-    return {"checkins_today": count or 0, "in_gym_now": in_gym or 0, "date": str(today)}
+    )).scalar() or 0
+    return {"checkins_today": total, "in_gym_now": in_gym, "date": str(today)}

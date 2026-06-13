@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { api } from "../lib/api"
 import { Card, KpiCard } from "../components/ui/Card"
+import { useDashboardWS } from "../hooks/useDashboardWS"
 import { Badge } from "../components/ui/Badge"
 import {
   AreaChart, Area, PieChart, Pie, Cell,
@@ -30,11 +31,15 @@ export default function DashboardPage() {
   const [liveTime, setLiveTime] = useState(new Date())
   useEffect(() => { const t = setInterval(() => setLiveTime(new Date()), 60000); return () => clearInterval(t) }, [])
 
-  const { data: kpis } = useQuery({
+  // Real-time KPIs via WebSocket, falls back to HTTP poll
+  const { kpis: wsKpis, connected: wsConnected } = useDashboardWS(BRANCH_ID)
+  const { data: httpKpis } = useQuery({
     queryKey: ["dashboard-kpis", BRANCH_ID],
     queryFn: () => api.get(`/api/v1/dashboard/kpis?branch_id=${BRANCH_ID}`).then(r => r.data),
-    refetchInterval: 30000,
+    refetchInterval: wsConnected ? 0 : 30000,  // skip HTTP poll if WS is live
+    enabled: !wsConnected,
   })
+  const kpis = wsKpis || httpKpis
 
   const { data: membership } = useQuery({
     queryKey: ["membership-summary-dash"],
@@ -76,7 +81,7 @@ export default function DashboardPage() {
           <div style={{ fontSize:"12px", color:"#636882" }}>
             {liveTime.toLocaleDateString("en-SA",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
             &nbsp;·&nbsp;
-            <span style={{ color:"#00e5a0" }}>● Live</span>
+            <span style={{ color: wsConnected ? "#00e5a0" : "#ffc107" }}>{wsConnected ? "● Live" : "○ Polling"}</span>
           </div>
         </div>
         <button

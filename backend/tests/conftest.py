@@ -1,5 +1,6 @@
 """Pytest configuration and shared fixtures."""
 import asyncio
+import uuid
 import pytest
 import pytest_asyncio
 from typing import AsyncGenerator
@@ -14,7 +15,6 @@ from app.models.user import User, UserRole
 from app.models.branch import Branch
 
 
-# Use in-memory SQLite for tests
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 test_engine = create_async_engine(
@@ -72,7 +72,9 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
 
 @pytest_asyncio.fixture
 async def seed_branch(db_session: AsyncSession) -> Branch:
-    branch = Branch(name="Test Branch", code="TEST-01", city="Riyadh", capacity=100)
+    # Use unique code per test to avoid UNIQUE conflicts
+    code = f"TST-{uuid.uuid4().hex[:6].upper()}"
+    branch = Branch(name="Test Branch", code=code, city="Riyadh", capacity=100)
     db_session.add(branch)
     await db_session.flush()
     return branch
@@ -80,8 +82,10 @@ async def seed_branch(db_session: AsyncSession) -> Branch:
 
 @pytest_asyncio.fixture
 async def seed_admin(db_session: AsyncSession, seed_branch: Branch) -> User:
+    # Use unique email per test
+    email = f"admin_{uuid.uuid4().hex[:6]}@gymos.sa"
     user = User(
-        email="test_admin@gymos.sa",
+        email=email,
         full_name="Test Admin",
         hashed_password=hash_password("Admin@123"),
         role=UserRole.SUPER_ADMIN,
@@ -97,7 +101,7 @@ async def seed_admin(db_session: AsyncSession, seed_branch: Branch) -> User:
 async def auth_headers(client: AsyncClient, seed_admin: User) -> dict:
     r = await client.post(
         "/api/v1/auth/login",
-        data={"username": "test_admin@gymos.sa", "password": "Admin@123"},
+        data={"username": seed_admin.email, "password": "Admin@123"},
     )
     assert r.status_code == 200, f"Login failed: {r.text}"
     token = r.json()["access_token"]

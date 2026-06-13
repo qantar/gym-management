@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
 from datetime import date, datetime
 from app.models.member import MemberStatus, Gender
@@ -36,24 +36,20 @@ class MemberUpdate(BaseModel):
 
 
 class MemberResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     member_id: str
     branch_id: int
     first_name: str
     last_name: str
-    email: Optional[str]
+    email: Optional[str] = None
     phone: str
-    date_of_birth: Optional[date]
-    gender: Optional[Gender]
+    date_of_birth: Optional[date] = None
+    gender: Optional[Gender] = None
     status: MemberStatus
     total_checkins: int
     lifetime_value: int
-    qr_code: Optional[str]
+    qr_code: Optional[str] = None
+    notes: Optional[str] = None
+    medical_notes: Optional[str] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-    @property
-    def full_name(self) -> str:
-        return f"{self.first_name} {self.last_name}"

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 from app.models.attendance import CheckinMethod
@@ -18,12 +18,10 @@ class CheckoutRequest(BaseModel):
 
 
 class AttendanceResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     member_id: int
     branch_id: int
     check_in: datetime
-    check_out: Optional[datetime]
+    check_out: Optional[datetime] = None
     method: CheckinMethod
-
-    class Config:
-        from_attributes = True

@@ -138,7 +138,7 @@ async def list_sales(
         query = query.where(func.date(Sale.created_at) >= date_from)
     query = query.order_by(Sale.created_at.desc()).offset((page-1)*page_size).limit(page_size)
     r = await db.execute(query)
-    return r.scalars().all()
+    return r.unique().scalars().all()
 
 
 @router.get("/sales/summary")
@@ -166,7 +166,7 @@ async def void_sale(
     current_user: User = Depends(get_current_user),
 ):
     r = await db.execute(select(Sale).where(Sale.id == sale_id))
-    sale = r.scalar_one_or_none()
+    sale = r.unique().scalar_one_or_none()
     if not sale:
         raise HTTPException(404, "Sale not found")
     if sale.status != SaleStatus.COMPLETED:
@@ -196,4 +196,4 @@ async def search_products(
         or_(Product.name.ilike(f"%{q}%"), Product.sku.ilike(f"%{q}%"), Product.barcode.ilike(f"%{q}%")),
     ).limit(20)
     r = await db.execute(query)
-    return r.scalars().all()
+    return r.unique().scalars().all()

@@ -105,7 +105,11 @@ async def checkout(
     if log.check_out:
         raise HTTPException(400, "Already checked out")
     log.check_out = datetime.now(timezone.utc)
-    duration = int((log.check_out - log.check_in).total_seconds() / 60)
+    # Ensure timezone-aware comparison
+    check_in = log.check_in
+    if check_in.tzinfo is None:
+        check_in = check_in.replace(tzinfo=timezone.utc)
+    duration = int((log.check_out - check_in).total_seconds() / 60)
     await db.commit()
 
     await ws_manager.broadcast_to_branch(log.branch_id, "checkout", {

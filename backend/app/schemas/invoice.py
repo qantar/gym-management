@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 from decimal import Decimal
@@ -26,6 +26,7 @@ class PaymentCreate(BaseModel):
 
 
 class InvoiceResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     invoice_number: str
     member_id: int
@@ -38,8 +39,5 @@ class InvoiceResponse(BaseModel):
     amount_due: Decimal
     status: InvoiceStatus
     due_date: datetime
-    paid_at: Optional[datetime]
+    paid_at: Optional[datetime] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True

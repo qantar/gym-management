@@ -1,23 +1,33 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import event
 from app.core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DEBUG and settings.ENVIRONMENT == "development",
-    pool_size=20,
-    max_overflow=40,
-    pool_pre_ping=True,
-    pool_recycle=300,
-    connect_args={
-        "server_settings": {"jit": "off"},
-        "command_timeout": 60,
-    },
-)
+_is_sqlite = "sqlite" in settings.DATABASE_URL.lower()
+
+# asyncpg-specific connect args only for PostgreSQL
+_connect_args = {} if _is_sqlite else {
+    "server_settings": {"jit": "off"},
+    "command_timeout": 60,
+}
+
+# Pool settings — StaticPool for SQLite (thread-safe in-memory), NullPool not needed
+_engine_kwargs: dict = {
+    "echo": settings.DEBUG and settings.ENVIRONMENT == "development",
+    "connect_args": _connect_args,
+}
+
+if not _is_sqlite:
+    _engine_kwargs.update({
+        "pool_size": 20,
+        "max_overflow": 40,
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    })
+
+engine = create_async_engine(settings.DATABASE_URL, **_engine_kwargs)
 
 AsyncSessionLocal = async_sessionmaker(
     engine,

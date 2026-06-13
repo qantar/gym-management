@@ -1,6 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from app.models.inventory import ProductCategory
 
@@ -29,6 +29,7 @@ class StockAdjustment(BaseModel):
 
 
 class ProductResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     sku: str
     name: str
@@ -38,7 +39,4 @@ class ProductResponse(BaseModel):
     stock_quantity: int
     reorder_level: int
     is_active: bool
-    created_at: date
-
-    class Config:
-        from_attributes = True
+    created_at: datetime

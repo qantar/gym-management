@@ -25,17 +25,20 @@ async def revenue_report(
     branch_id: Optional[int] = None,
     date_from: Optional[date] = None,
     date_to: Optional[date] = None,
-    group_by: str = Query("month", regex="^(day|week|month)$"),
+    group_by: str = Query("month", pattern="^(day|week|month)$"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_roles(*FINANCE_ROLES)),
 ):
     date_from = date_from or (date.today() - timedelta(days=180))
     date_to = date_to or date.today()
 
+    # Use strftime for SQLite compat; date_trunc used in PostgreSQL
+    from app.core.config import settings
+    is_pg = "postgresql" in settings.DATABASE_URL
     if group_by == "month":
-        trunc = func.date_trunc("month", Invoice.paid_at)
+        trunc = func.date_trunc("month", Invoice.paid_at) if is_pg else func.strftime("%Y-%m", Invoice.paid_at)
     elif group_by == "week":
-        trunc = func.date_trunc("week", Invoice.paid_at)
+        trunc = func.date_trunc("week", Invoice.paid_at) if is_pg else func.strftime("%Y-%W", Invoice.paid_at)
     else:
         trunc = func.date(Invoice.paid_at)
 

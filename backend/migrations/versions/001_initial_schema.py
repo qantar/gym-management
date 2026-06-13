@@ -523,9 +523,27 @@ def upgrade() -> None:
     )
 
 
+    # staff_shifts
+    op.create_table("staff_shifts",
+        sa.Column("id", sa.Integer, primary_key=True),
+        sa.Column("staff_id", sa.Integer, sa.ForeignKey("staff.id"), nullable=False),
+        sa.Column("branch_id", sa.Integer, sa.ForeignKey("branches.id"), nullable=False),
+        sa.Column("shift_date", sa.Date, nullable=False),
+        sa.Column("start_time", sa.String(5), nullable=False),
+        sa.Column("end_time", sa.String(5), nullable=False),
+        sa.Column("status", sa.String(20), default="scheduled"),
+        sa.Column("notes", sa.Text, nullable=True),
+        sa.Column("created_by_id", sa.Integer, sa.ForeignKey("users.id"), nullable=True),
+        sa.Column("is_recurring", sa.Boolean, default=False),
+        sa.Column("recurrence_rule", sa.String(50), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
+    )
+    op.create_index("ix_staff_shifts_date_branch", "staff_shifts", ["branch_id", "shift_date"])
+
 def downgrade() -> None:
     tables = [
-        "pay_slips","payroll_runs","coupons","campaign_logs","campaigns",
+        "pay_slips","payroll_runs","staff_shifts","coupons","campaign_logs","campaigns",
         "audit_logs","class_bookings","class_schedules","pos_sale_items",
         "pos_sales","purchase_orders","stock_movements","products",
         "staff_attendance","staff","leads","payments","invoices",

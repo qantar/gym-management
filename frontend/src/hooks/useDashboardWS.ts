@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react"
+import { useAuthStore } from "../stores/auth"
 
 export interface KPIData {
   active_members: number
@@ -6,12 +7,13 @@ export interface KPIData {
   in_gym_now: number
   revenue_today: string
   overdue_invoices: number
+  new_members_month: number
 }
 
-function buildWSUrl(branchId: number): string {
+function buildWSUrl(branchId: number, token: string): string {
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000"
   const wsBase = apiUrl.replace(/^https?/, (m) => (m === "https" ? "wss" : "ws"))
-  return `${wsBase}/api/v1/realtime/dashboard/${branchId}`
+  return `${wsBase}/api/v1/realtime/dashboard/${branchId}?token=${encodeURIComponent(token)}`
 }
 
 export function useDashboardWS(branchId: number) {
@@ -19,43 +21,53 @@ export function useDashboardWS(branchId: number) {
   const [connected, setConnected] = useState(false)
   const ws = useRef<WebSocket | null>(null)
   const unmounted = useRef(false)
+  const reconnectRef = useRef<ReturnType<typeof setTimeout>>()
+  const token = useAuthStore.getState().token
 
   const connect = useCallback(() => {
-    if (unmounted.current) return
+    if (unmounted.current || !token) return
     try {
-      const socket = new WebSocket(buildWSUrl(branchId))
+      const socket = new WebSocket(buildWSUrl(branchId, token))
       ws.current = socket
 
-      socket.onopen = () => { if (!unmounted.current) setConnected(true) }
+      socket.onopen = () => {
+        if (!unmounted.current) setConnected(true)
+      }
 
       socket.onmessage = (e) => {
         try {
           const msg = JSON.parse(e.data)
           if (msg.event === "kpi_update" && msg.data) {
-            setKpis(msg.data)
+            setKpis(msg.data as KPIData)
           }
-        } catch {}
+        } catch { /* ignore */ }
       }
 
-      socket.onclose = () => {
+      socket.onclose = (ev) => {
         setConnected(false)
-        if (!unmounted.current) setTimeout(connect, 5000)
+        // Don't reconnect if auth failure
+        if (!unmounted.current && ev.code !== 4001) {
+          reconnectRef.current = setTimeout(connect, 5000)
+        }
       }
 
       socket.onerror = () => socket.close()
     } catch {
-      setTimeout(connect, 5000)
+      if (!unmounted.current) {
+        reconnectRef.current = setTimeout(connect, 8000)
+      }
     }
-  }, [branchId])
+  }, [branchId, token])
 
   useEffect(() => {
     unmounted.current = false
-    connect()
+    if (token) connect()
     return () => {
       unmounted.current = true
+      clearTimeout(reconnectRef.current)
       ws.current?.close()
     }
-  }, [connect])
+  }, [connect, token])
 
   return { kpis, connected }
 }

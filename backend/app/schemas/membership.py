@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import date, datetime
 from decimal import Decimal
@@ -23,6 +23,7 @@ class MembershipFreeze(BaseModel):
 
 
 class MembershipResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     member_id: int
     plan_id: int
@@ -35,6 +36,3 @@ class MembershipResponse(BaseModel):
     freeze_days_used: int
     auto_renew: bool
     created_at: datetime
-
-    class Config:
-        from_attributes = True

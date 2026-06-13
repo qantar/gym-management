@@ -203,7 +203,9 @@ async def create_coupon(payload: CouponCreate, db: AsyncSession = Depends(get_db
     existing = await db.execute(select(Coupon).where(Coupon.code == payload.code.upper()))
     if existing.scalar_one_or_none():
         raise HTTPException(400, f"Coupon code '{payload.code}' already exists")
-    coupon = Coupon(**payload.model_dump(), code=payload.code.upper())
+    data = payload.model_dump()
+    data['code'] = payload.code.upper()
+    coupon = Coupon(**data)
     db.add(coupon)
     await db.commit()
     await db.refresh(coupon)

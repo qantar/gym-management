@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 from decimal import Decimal
@@ -27,17 +27,15 @@ class LeadUpdate(BaseModel):
 
 
 class LeadResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     branch_id: int
     full_name: str
     phone: str
-    email: Optional[str]
+    email: Optional[str] = None
     source: LeadSource
     status: LeadStatus
-    expected_value: Optional[Decimal]
-    assigned_to_id: Optional[int]
-    next_follow_up: Optional[datetime]
+    expected_value: Optional[Decimal] = None
+    assigned_to_id: Optional[int] = None
+    next_follow_up: Optional[datetime] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True

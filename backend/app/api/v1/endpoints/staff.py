@@ -111,7 +111,7 @@ async def delete_staff(
 @router.post("/{staff_id}/attendance")
 async def record_attendance(
     staff_id: int,
-    action: str = Query(..., regex="^(checkin|checkout)$"),
+    action: str = Query(..., pattern="^(checkin|checkout)$"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

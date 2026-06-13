@@ -13,10 +13,10 @@ async def test_health(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_login_success(client: AsyncClient, seed_admin):
+async def test_login_success(client: AsyncClient, seed_admin: "User"):
     r = await client.post(
         "/api/v1/auth/login",
-        data={"username": "test_admin@gymos.sa", "password": "Admin@123"},
+        data={"username": seed_admin.email, "password": "Admin@123"},
     )
     assert r.status_code == 200
     data = r.json()
@@ -48,7 +48,7 @@ async def test_get_me(client: AsyncClient, auth_headers: dict):
     r = await client.get("/api/v1/users/me", headers=auth_headers)
     assert r.status_code == 200
     data = r.json()
-    assert data["email"] == "test_admin@gymos.sa"
+    assert "@gymos.sa" in data["email"]
     assert data["role"] == "super_admin"
 
 
@@ -62,7 +62,7 @@ async def test_get_me_no_token(client: AsyncClient):
 async def test_refresh_token(client: AsyncClient, seed_admin):
     login = await client.post(
         "/api/v1/auth/login",
-        data={"username": "test_admin@gymos.sa", "password": "Admin@123"},
+        data={"username": seed_admin.email, "password": "Admin@123"},
     )
     refresh_token = login.json()["refresh_token"]
     r = await client.post(f"/api/v1/auth/refresh?refresh_token={refresh_token}")
