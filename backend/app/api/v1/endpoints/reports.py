@@ -173,3 +173,103 @@ async def inventory_summary(branch_id: Optional[int] = None, db: AsyncSession = 
     low = (await db.execute(q_low)).scalar()
     out = (await db.execute(q_out)).scalar()
     return {"sku_count": sku_count, "inventory_value": str(inv_value or 0), "low_stock_items": low, "out_of_stock_items": out}
+
+
+@router.get("/export/members")
+async def export_members(
+    format: str = "xlsx",
+    branch_id: Optional[int] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Export members as Excel or CSV."""
+    from fastapi.responses import Response
+    from app.services.export_service import export_members_excel, export_members_csv
+    from app.models.member import Member
+
+    q = select(Member).where(Member.is_deleted == False)
+    if branch_id:
+        q = q.where(Member.branch_id == branch_id)
+    r = await db.execute(q.order_by(Member.created_at.desc()))
+    members = r.scalars().all()
+    data = [
+        {k: getattr(m, k, None) for k in ["member_id","first_name","last_name","email","phone","total_checkins","lifetime_value","created_at"]}
+        | {"status": m.status.value}
+        for m in members
+    ]
+    if format == "csv":
+        content = export_members_csv(data).encode()
+        return Response(content=content, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=members.csv"})
+    content = export_members_excel(data)
+    return Response(content=content, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": "attachment; filename=members.xlsx"})
+
+
+@router.get("/export/invoices")
+async def export_invoices_report(
+    format: str = "xlsx",
+    branch_id: Optional[int] = None,
+    status: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Export invoices as Excel or CSV."""
+    from fastapi.responses import Response
+    from app.services.export_service import export_invoices_excel, export_invoices_csv
+    from app.models.invoice import Invoice
+
+    q = select(Invoice)
+    if branch_id:
+        q = q.where(Invoice.branch_id == branch_id)
+    if status:
+        q = q.where(Invoice.status == status)
+    r = await db.execute(q.order_by(Invoice.created_at.desc()).limit(5000))
+    invoices = r.scalars().all()
+    data = [
+        {
+            "invoice_number": i.invoice_number, "member_id": i.member_id,
+            "description": i.description or "", "subtotal": str(i.subtotal),
+            "discount_amount": str(i.discount_amount), "tax_amount": str(i.tax_amount),
+            "total": str(i.total), "amount_paid": str(i.amount_paid),
+            "amount_due": str(i.amount_due), "status": i.status.value,
+            "due_date": i.due_date.isoformat() if i.due_date else "",
+            "paid_at": i.paid_at.isoformat() if i.paid_at else "",
+        }
+        for i in invoices
+    ]
+    if format == "csv":
+        content = export_invoices_csv(data).encode()
+        return Response(content=content, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=invoices.csv"})
+    content = export_invoices_excel(data)
+    return Response(content=content, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": "attachment; filename=invoices.xlsx"})
+
+
+@router.get("/export/members/pdf")
+async def export_members_pdf(
+    branch_id: Optional[int] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Export members as PDF."""
+    from fastapi.responses import Response
+    from app.services.pdf_service import generate_members_report_pdf
+    from app.models.member import Member
+    from app.models.branch import Branch
+
+    q = select(Member).where(Member.is_deleted == False)
+    if branch_id:
+        q = q.where(Member.branch_id == branch_id)
+    r = await db.execute(q.limit(500))
+    members = r.scalars().all()
+    data = [
+        {"member_id": m.member_id, "first_name": m.first_name, "last_name": m.last_name,
+         "phone": m.phone, "email": m.email or "", "status": m.status.value,
+         "total_checkins": m.total_checkins, "created_at": str(m.created_at or "")}
+        for m in members
+    ]
+    bname = "All Branches"
+    if branch_id:
+        br = (await db.execute(select(Branch).where(Branch.id == branch_id))).scalar_one_or_none()
+        if br:
+            bname = br.name
+    pdf = generate_members_report_pdf(data, bname)
+    return Response(content=pdf, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=members_report.pdf"})

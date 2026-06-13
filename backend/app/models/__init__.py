@@ -16,3 +16,5 @@ from app.models.pos import Sale, SaleItem
 from app.models.marketing import Campaign, CampaignLog, Coupon
 
 from app.models.payroll import PayrollRun, PaySlip
+
+from app.models.shift import StaffShift

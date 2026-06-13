@@ -179,3 +179,53 @@ async def run_collections(branch_id: Optional[int] = None, db: AsyncSession = De
     result = await db.execute(q)
     await db.commit()
     return {"updated": result.rowcount, "message": f"{result.rowcount} invoices marked overdue"}
+
+
+@router.get("/{invoice_id}/pdf")
+async def download_invoice_pdf(
+    invoice_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Download invoice as PDF."""
+    from fastapi.responses import Response
+    from app.services.pdf_service import generate_invoice_pdf
+    from app.models.member import Member
+    from app.models.branch import Branch
+
+    r = await db.execute(select(Invoice).where(Invoice.id == invoice_id))
+    inv = r.scalar_one_or_none()
+    if not inv:
+        raise HTTPException(404, "Invoice not found")
+    m_r = await db.execute(select(Member).where(Member.id == inv.member_id))
+    member = m_r.scalar_one_or_none()
+    b_r = await db.execute(select(Branch).where(Branch.id == inv.branch_id))
+    branch = b_r.scalar_one_or_none()
+
+    inv_dict = {
+        "invoice_number": inv.invoice_number, "description": inv.description or "",
+        "subtotal": str(inv.subtotal), "discount_amount": str(inv.discount_amount),
+        "tax_amount": str(inv.tax_amount), "tax_rate": str(inv.tax_rate),
+        "total": str(inv.total), "amount_paid": str(inv.amount_paid),
+        "amount_due": str(inv.amount_due), "status": inv.status.value,
+        "due_date": inv.due_date.isoformat() if inv.due_date else "",
+        "created_at": inv.created_at.isoformat() if inv.created_at else "",
+    }
+    m_dict = {
+        "first_name": member.first_name if member else "", 
+        "last_name": member.last_name if member else "",
+        "email": member.email if member else "",
+        "phone": member.phone if member else "",
+    } if member else {}
+    b_dict = {
+        "name": branch.name if branch else "GymOS",
+        "address": branch.address if branch else "",
+        "phone": branch.phone if branch else "",
+    } if branch else {"name": "GymOS", "address": "", "phone": ""}
+
+    pdf_bytes = generate_invoice_pdf(inv_dict, m_dict, b_dict)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={inv.invoice_number}.pdf"},
+    )

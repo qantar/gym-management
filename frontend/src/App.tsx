@@ -17,6 +17,9 @@ import MarketingPage from "./pages/MarketingPage"
 import SchedulingPage from "./pages/SchedulingPage"
 import PayrollPage from "./pages/PayrollPage"
 import AuditPage from "./pages/AuditPage"
+import MemberDetailPage from "./pages/MemberDetailPage"
+import KioskPage from "./pages/KioskPage"
+import ShiftsPage from "./pages/ShiftsPage"
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -44,6 +47,9 @@ export default function App() {
         <Route path="scheduling" element={<SchedulingPage />} />
         <Route path="payroll" element={<PayrollPage />} />
         <Route path="audit" element={<AuditPage />} />
+        <Route path="members/:id" element={<MemberDetailPage />} />
+        <Route path="kiosk" element={<KioskPage />} />
+        <Route path="shifts" element={<ShiftsPage />} />
       </Route>
     </Routes>
   )

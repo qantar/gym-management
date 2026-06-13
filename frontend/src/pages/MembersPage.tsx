@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "../lib/api"
 import { Card } from "../components/ui/Card"
@@ -8,6 +9,7 @@ import { FormRow, FormGroup, Btn } from "../components/ui/FormField"
 import toast from "react-hot-toast"
 
 export default function MembersPage() {
+  const navigate = useNavigate()
   const [search, setSearch] = useState("")
   const [addOpen, setAddOpen] = useState(false)
   const [form, setForm] = useState({ first_name: "", last_name: "", phone: "", email: "", branch_id: 1 })
@@ -70,7 +72,7 @@ export default function MembersPage() {
                     <td style={{ padding: "11px 14px", color: "#636882" }}>{new Date(m.created_at).toLocaleDateString()}</td>
                     <td style={{ padding: "11px 14px" }}>
                       <div style={{ display: "flex", gap: "4px" }}>
-                        <Btn size="sm">View</Btn>
+                        <Btn size="sm" onClick={() => navigate(`/members/${m.id}`)}>View</Btn>
                         <Btn size="sm">Edit</Btn>
                       </div>
                     </td>

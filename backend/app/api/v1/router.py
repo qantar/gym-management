@@ -1,6 +1,11 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import (
     audit,
+    member_detail,
+    shifts,
+    notifications,
+    realtime,
+    kiosk,
     marketing,
     payroll,
     pos,
@@ -29,3 +34,8 @@ api_router.include_router(marketing.router, prefix="/marketing", tags=["Marketin
 api_router.include_router(payroll.router, prefix="/payroll", tags=["Payroll"])
 
 api_router.include_router(audit.router, prefix="/audit", tags=["Audit"])
+api_router.include_router(member_detail.router, prefix="/members", tags=["Member Detail"])
+api_router.include_router(shifts.router, prefix="/shifts", tags=["Shifts"])
+api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
+api_router.include_router(realtime.router, prefix="/realtime", tags=["Realtime"])
+api_router.include_router(kiosk.router, prefix="/kiosk", tags=["Kiosk"])
