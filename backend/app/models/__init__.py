@@ -12,3 +12,7 @@ from app.models.class_schedule import ClassSchedule, ClassBooking
 from app.models.audit import AuditLog
 
 from app.models.pos import Sale, SaleItem
+
+from app.models.marketing import Campaign, CampaignLog, Coupon
+
+from app.models.payroll import PayrollRun, PaySlip
