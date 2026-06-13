@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GymOS Enterprise</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg0: #0a0b0e;
+    --bg1: #0f1117;
+    --bg2: #14161f;
+    --bg3: #1a1d2a;
+    --bg4: #1f2235;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --accent: #6c63ff;
+    --accent2: #4fc3f7;
+    --accent3: #00e5a0;
+    --accent4: #ff6b6b;
+    --accent5: #ffc107;
+    --text0: #f0f2ff;
+    --text1: #9ba3c0;
+    --text2: #636882;
+    --success: #00e5a0;
+    --warning: #ffc107;
+    --danger: #ff6b6b;
+    --info: #4fc3f7;
+    --sidebar-w: 220px;
+    --header-h: 52px;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; overflow:hidden; }
+  body { font-family:var(--font); background:var(--bg0); color:var(--text0); font-size:13px; }
+
+  /* SIDEBAR */
+  #sidebar {
+    position:fixed; left:0; top:0; bottom:0; width:var(--sidebar-w);
+    background:var(--bg1); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; z-index:100; overflow:hidden;
+  }
+  .logo-area {
+    padding:0 16px; height:var(--header-h); display:flex; align-items:center;
+    gap:10px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .logo-icon {
+    width:28px; height:28px; background:var(--accent);
+    border-radius:6px; display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700; color:#fff; flex-shrink:0;
+  }
+  .logo-text { font-size:14px; font-weight:600; color:var(--text0); }
+  .logo-sub { font-size:10px; color:var(--text2); letter-spacing:0.5px; text-transform:uppercase; }
+  
+  .nav-section { padding:8px 0; }
+  .nav-label {
+    padding:4px 16px 4px; font-size:10px; font-weight:600;
+    color:var(--text2); text-transform:uppercase; letter-spacing:0.8px;
+  }
+  .nav-item {
+    padding:7px 12px; margin:1px 8px; border-radius:6px;
+    display:flex; align-items:center; gap:10px; cursor:pointer;
+    color:var(--text1); transition:all 0.15s; position:relative; font-size:12.5px;
+  }
+  .nav-item:hover { background:var(--bg3); color:var(--text0); }
+  .nav-item.active { background:rgba(108,99,255,0.15); color:var(--accent); }
+  .nav-item.active::before {
+    content:''; position:absolute; left:-4px; top:50%; transform:translateY(-50%);
+    width:3px; height:18px; background:var(--accent); border-radius:2px;
+  }
+  .nav-icon { width:16px; text-align:center; font-size:14px; flex-shrink:0; }
+  .nav-badge {
+    margin-left:auto; background:var(--accent); color:#fff;
+    font-size:10px; font-weight:600; padding:1px 6px; border-radius:10px; min-width:18px; text-align:center;
+  }
+  .nav-badge.warn { background:var(--warning); color:#000; }
+  .nav-badge.danger { background:var(--danger); }
+  
+  .sidebar-bottom {
+    margin-top:auto; padding:12px 8px; border-top:1px solid var(--border);
+  }
+  .user-card {
+    padding:8px 10px; border-radius:8px; display:flex; align-items:center;
+    gap:10px; cursor:pointer; background:var(--bg2);
+  }
+  .avatar {
+    width:30px; height:30px; border-radius:50%; background:var(--accent);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; color:#fff; flex-shrink:0;
+  }
+  .user-info .uname { font-size:12px; font-weight:500; }
+  .user-info .urole { font-size:10px; color:var(--text2); }
+
+  /* HEADER */
+  #header {
+    position:fixed; left:var(--sidebar-w); right:0; top:0; height:var(--header-h);
+    background:var(--bg1); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; padding:0 20px; gap:16px; z-index:99;
+  }
+  .breadcrumb { font-size:12px; color:var(--text2); display:flex; align-items:center; gap:6px; }
+  .breadcrumb span { color:var(--text0); font-weight:500; }
+  .header-actions { margin-left:auto; display:flex; align-items:center; gap:8px; }
+  .hbtn {
+    padding:6px 12px; border-radius:6px; border:1px solid var(--border2);
+    background:transparent; color:var(--text1); cursor:pointer; font-size:12px;
+    transition:all 0.15s; display:flex; align-items:center; gap:6px;
+  }
+  .hbtn:hover { background:var(--bg3); color:var(--text0); }
+  .hbtn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .hbtn.primary:hover { background:#7c74ff; }
+  .notif-dot {
+    width:7px; height:7px; background:var(--danger); border-radius:50%;
+    margin-left:2px; display:inline-block;
+  }
+  .search-box {
+    display:flex; align-items:center; gap:8px; padding:6px 12px;
+    background:var(--bg2); border:1px solid var(--border); border-radius:6px;
+    color:var(--text2); cursor:text; font-size:12px; min-width:200px;
+  }
+
+  /* MAIN */
+  #main {
+    position:fixed; left:var(--sidebar-w); right:0; top:var(--header-h); bottom:0;
+    overflow-y:auto; overflow-x:hidden; background:var(--bg0);
+  }
+  .page { display:none; padding:24px; }
+  .page.active { display:block; }
+
+  /* CARDS */
+  .card {
+    background:var(--bg2); border:1px solid var(--border); border-radius:10px;
+    padding:18px 20px; transition:border-color 0.2s;
+  }
+  .card:hover { border-color:var(--border2); }
+  .card-title {
+    font-size:11px; font-weight:600; color:var(--text2);
+    text-transform:uppercase; letter-spacing:0.6px; margin-bottom:4px;
+  }
+  .card-value { font-size:24px; font-weight:600; color:var(--text0); line-height:1.2; }
+  .card-delta { font-size:11px; color:var(--success); margin-top:4px; }
+  .card-delta.neg { color:var(--danger); }
+
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  .grid5 { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; }
+
+  .section-title {
+    font-size:15px; font-weight:600; color:var(--text0);
+    margin-bottom:16px; display:flex; align-items:center; gap:10px;
+  }
+  .section-title small { font-size:11px; color:var(--text2); font-weight:400; margin-left:4px; }
+
+  /* CHART CARD */
+  .chart-card {
+    background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:20px;
+  }
+  .chart-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .chart-title { font-size:13px; font-weight:600; }
+  .chart-sub { font-size:11px; color:var(--text2); margin-top:2px; }
+  .chart-tabs { display:flex; gap:2px; }
+  .tab-btn {
+    padding:4px 10px; border-radius:4px; border:none; background:transparent;
+    color:var(--text2); cursor:pointer; font-size:11px; transition:all 0.15s;
+  }
+  .tab-btn.active, .tab-btn:hover { background:var(--bg4); color:var(--text0); }
+
+  /* TABLE */
+  .tbl-wrap { overflow-x:auto; border-radius:8px; }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  thead tr { border-bottom:1px solid var(--border); }
+  th { padding:10px 14px; text-align:left; color:var(--text2); font-weight:500; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap; }
+  td { padding:11px 14px; border-bottom:1px solid rgba(255,255,255,0.03); color:var(--text1); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tbody tr:hover td { background:rgba(255,255,255,0.02); color:var(--text0); }
+
+  /* BADGES */
+  .badge {
+    padding:3px 8px; border-radius:4px; font-size:10.5px; font-weight:500; display:inline-flex; align-items:center; gap:4px;
+  }
+  .badge-success { background:rgba(0,229,160,0.12); color:#00e5a0; }
+  .badge-warning { background:rgba(255,193,7,0.12); color:#ffc107; }
+  .badge-danger { background:rgba(255,107,107,0.12); color:#ff6b6b; }
+  .badge-info { background:rgba(79,195,247,0.12); color:#4fc3f7; }
+  .badge-purple { background:rgba(108,99,255,0.12); color:#6c63ff; }
+  .badge-gray { background:rgba(255,255,255,0.06); color:var(--text1); }
+
+  /* FORM */
+  .form-row { display:grid; gap:16px; margin-bottom:16px; }
+  .form-row.cols2 { grid-template-columns:1fr 1fr; }
+  .form-row.cols3 { grid-template-columns:1fr 1fr 1fr; }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  label { font-size:11px; font-weight:500; color:var(--text2); text-transform:uppercase; letter-spacing:0.5px; }
+  input, select, textarea {
+    background:var(--bg3); border:1px solid var(--border2); border-radius:6px;
+    padding:8px 12px; color:var(--text0); font-size:13px; outline:none;
+    transition:border-color 0.15s; font-family:inherit;
+  }
+  input:focus, select:focus, textarea:focus { border-color:var(--accent); }
+  select option { background:var(--bg3); }
+  textarea { resize:vertical; min-height:80px; }
+
+  /* STAT ROW */
+  .stat-row { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); }
+  .stat-row:last-child { border-bottom:none; }
+  .stat-label { color:var(--text2); flex:1; font-size:12px; }
+  .stat-val { font-weight:600; font-size:12px; }
+  .stat-bar-wrap { width:80px; height:4px; background:var(--bg4); border-radius:2px; }
+  .stat-bar { height:4px; border-radius:2px; background:var(--accent); }
+
+  /* PIPELINE */
+  .pipeline { display:flex; gap:12px; overflow-x:auto; padding-bottom:8px; }
+  .pipe-col { min-width:200px; flex-shrink:0; }
+  .pipe-header { font-size:11px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:0.5px; padding:8px 0; display:flex; align-items:center; gap:6px; }
+  .pipe-count { background:var(--bg4); padding:1px 7px; border-radius:10px; font-size:10px; }
+  .pipe-card {
+    background:var(--bg2); border:1px solid var(--border); border-radius:8px;
+    padding:12px; margin-bottom:8px; cursor:pointer; transition:all 0.15s;
+  }
+  .pipe-card:hover { border-color:var(--accent); transform:translateY(-1px); }
+  .pipe-name { font-size:12.5px; font-weight:500; margin-bottom:4px; }
+  .pipe-sub { font-size:11px; color:var(--text2); }
+  .pipe-amount { font-size:13px; font-weight:600; color:var(--accent3); margin-top:8px; }
+
+  /* KIOSK / ATTENDANCE */
+  .kiosk-card {
+    background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+    padding:20px; display:flex; flex-direction:column; align-items:center; gap:12px;
+  }
+  .qr-mock {
+    width:120px; height:120px; background:var(--bg4); border-radius:8px;
+    display:grid; grid-template-columns:repeat(5,1fr); gap:4px; padding:12px;
+  }
+  .qr-cell { border-radius:2px; }
+
+  /* PROGRESS */
+  .progress { height:6px; background:var(--bg4); border-radius:3px; overflow:hidden; margin-top:8px; }
+  .progress-fill { height:100%; border-radius:3px; transition:width 0.6s; }
+
+  /* TIMELINE */
+  .timeline { position:relative; padding-left:24px; }
+  .timeline::before { content:''; position:absolute; left:7px; top:0; bottom:0; width:1px; background:var(--border); }
+  .tl-item { position:relative; margin-bottom:16px; }
+  .tl-dot { position:absolute; left:-20px; top:3px; width:9px; height:9px; border-radius:50%; background:var(--accent); border:2px solid var(--bg0); }
+  .tl-time { font-size:10px; color:var(--text2); margin-bottom:3px; }
+  .tl-text { font-size:12px; color:var(--text1); }
+  .tl-bold { font-weight:500; color:var(--text0); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width:4px; height:4px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--bg4); border-radius:2px; }
+
+  /* MODAL */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7);
+    z-index:1000; align-items:center; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal {
+    background:var(--bg2); border:1px solid var(--border2); border-radius:12px;
+    padding:24px; width:580px; max-width:95vw; max-height:90vh; overflow-y:auto;
+  }
+  .modal-title { font-size:16px; font-weight:600; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; }
+  .modal-close { cursor:pointer; color:var(--text2); font-size:20px; line-height:1; background:none; border:none; color:var(--text2); }
+
+  /* LIVEPULSE */
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .live-dot { width:7px; height:7px; background:var(--success); border-radius:50%; animation:pulse 2s infinite; display:inline-block; }
+
+  /* TABS */
+  .page-tabs { display:flex; gap:2px; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:3px; margin-bottom:20px; }
+  .page-tab {
+    padding:6px 16px; border-radius:5px; cursor:pointer; font-size:12px;
+    color:var(--text2); transition:all 0.15s; border:none; background:none;
+  }
+  .page-tab.active { background:var(--bg4); color:var(--text0); font-weight:500; }
+
+  /* NOTIFICATION TOAST */
+  #toast-container { position:fixed; bottom:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+  .toast {
+    background:var(--bg3); border:1px solid var(--border2); border-radius:8px;
+    padding:12px 16px; font-size:12.5px; max-width:320px;
+    animation:slideIn 0.3s ease; display:flex; align-items:center; gap:10px;
+  }
+  @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+  .toast-icon { font-size:16px; }
+
+  /* Heatmap */
+  .heatmap { display:grid; gap:3px; }
+  .hm-cell { border-radius:2px; height:16px; cursor:default; }
+
+  /* KPI Gauge */
+  .gauge-wrap { position:relative; width:100%; display:flex; justify-content:center; }
+
+  .btn { padding:7px 14px; border-radius:6px; border:1px solid var(--border2); background:transparent; color:var(--text0); cursor:pointer; font-size:12px; transition:all 0.15s; }
+  .btn:hover { background:var(--bg4); }
+  .btn-primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn-primary:hover { background:#7c74ff; }
+  .btn-success { background:rgba(0,229,160,0.15); border-color:var(--success); color:var(--success); }
+  .btn-danger { background:rgba(255,107,107,0.15); border-color:var(--danger); color:var(--danger); }
+  .btn-sm { padding:4px 10px; font-size:11px; }
+  .flex-row { display:flex; align-items:center; gap:10px; }
+  .flex-between { display:flex; align-items:center; justify-content:space-between; }
+  .mt8 { margin-top:8px; }
+  .mt16 { margin-top:16px; }
+  .mt24 { margin-top:24px; }
+  .mb8 { margin-bottom:8px; }
+  .mb16 { margin-bottom:16px; }
+  .gap16 { gap:16px; }
+  .text-muted { color:var(--text2); }
+  .text-success { color:var(--success); }
+  .text-danger { color:var(--danger); }
+  .text-warning { color:var(--warning); }
+  .text-info { color:var(--info); }
+  .text-accent { color:var(--accent); }
+  .fw600 { font-weight:600; }
+  .fs11 { font-size:11px; }
+  .fs12 { font-size:12px; }
+  .fs14 { font-size:14px; }
+  .fs20 { font-size:20px; }
+  .fs24 { font-size:24px; }
+  .fs32 { font-size:32px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="logo-area">
+    <div class="logo-icon">G</div>
+    <div>
+      <div class="logo-text">GymOS</div>
+      <div class="logo-sub">Enterprise</div>
+    </div>
+  </div>
+
+  <div style="overflow-y:auto;flex:1;padding:4px 0;">
+    <div class="nav-section">
+      <div class="nav-item active" onclick="showPage('dashboard',this)">
+        <span class="nav-icon">⊡</span> Dashboard
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Operations</div>
+      <div class="nav-item" onclick="showPage('members',this)">
+        <span class="nav-icon">👤</span> Members
+        <span class="nav-badge">2.4k</span>
+      </div>
+      <div class="nav-item" onclick="showPage('memberships',this)">
+        <span class="nav-icon">🏷️</span> Memberships
+      </div>
+      <div class="nav-item" onclick="showPage('attendance',this)">
+        <span class="nav-icon">✅</span> Attendance
+        <span class="nav-badge warn">47</span>
+      </div>
+      <div class="nav-item" onclick="showPage('scheduling',this)">
+        <span class="nav-icon">📅</span> Scheduling
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Finance</div>
+      <div class="nav-item" onclick="showPage('billing',this)">
+        <span class="nav-icon">💳</span> Billing
+        <span class="nav-badge danger">12</span>
+      </div>
+      <div class="nav-item" onclick="showPage('pos',this)">
+        <span class="nav-icon">🛒</span> POS
+      </div>
+      <div class="nav-item" onclick="showPage('inventory',this)">
+        <span class="nav-icon">📦</span> Inventory
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Growth</div>
+      <div class="nav-item" onclick="showPage('crm',this)">
+        <span class="nav-icon">🎯</span> CRM
+        <span class="nav-badge">18</span>
+      </div>
+      <div class="nav-item" onclick="showPage('marketing',this)">
+        <span class="nav-icon">📢</span> Marketing
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">People</div>
+      <div class="nav-item" onclick="showPage('staff',this)">
+        <span class="nav-icon">👥</span> Staff
+      </div>
+      <div class="nav-item" onclick="showPage('payroll',this)">
+        <span class="nav-icon">💰</span> Payroll
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Intelligence</div>
+      <div class="nav-item" onclick="showPage('reports',this)">
+        <span class="nav-icon">📊</span> Reports
+      </div>
+      <div class="nav-item" onclick="showPage('branches',this)">
+        <span class="nav-icon">🏢</span> Branches
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">System</div>
+      <div class="nav-item" onclick="showPage('settings',this)">
+        <span class="nav-icon">⚙️</span> Settings
+      </div>
+      <div class="nav-item" onclick="showPage('audit',this)">
+        <span class="nav-icon">🔍</span> Audit Log
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="avatar">SA</div>
+      <div class="user-info">
+        <div class="uname">Sarah Ahmed</div>
+        <div class="urole">Super Admin</div>
+      </div>
+      <span style="margin-left:auto;color:var(--text2);font-size:12px;">⋯</span>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="breadcrumb" id="breadcrumb">
+    GymOS <span style="color:var(--text2);">/</span> <span id="page-title">Dashboard</span>
+  </div>
+  <div class="search-box" onclick="document.getElementById('globalSearch').focus()">
+    <span style="font-size:14px;">🔍</span>
+    <input id="globalSearch" type="text" placeholder="Search members, invoices, leads..." style="background:none;border:none;outline:none;flex:1;color:var(--text0);font-size:12px;" />
+    <span style="font-size:10px;color:var(--text2);background:var(--bg4);padding:2px 6px;border-radius:3px;">⌘K</span>
+  </div>
+  <div class="header-actions">
+    <button class="hbtn" onclick="showModal('branchModal')">
+      🏢 Al Malaz Branch ▾
+    </button>
+    <button class="hbtn" onclick="showToast('3 new notifications','info')">
+      🔔 <span class="notif-dot"></span>
+    </button>
+    <button class="hbtn primary" onclick="showModal('quickAddModal')">
+      + Quick Add
+    </button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="main">
+
+<!-- ============ DASHBOARD ============ -->
+<div id="page-dashboard" class="page active">
+  <div class="flex-between mb16">
+    <div>
+      <div class="fs14 fw600" style="margin-bottom:3px;">Good morning, Sarah 👋</div>
+      <div class="fs12 text-muted">Saturday, June 13, 2026 &nbsp;|&nbsp; <span class="live-dot"></span> Live</div>
+    </div>
+    <div class="flex-row">
+      <button class="btn btn-sm" onclick="showToast('Report exported','success')">Export Report</button>
+      <button class="btn btn-sm btn-primary" onclick="showModal('quickAddModal')">+ Add Member</button>
+    </div>
+  </div>
+
+  <div class="grid5 mb16">
+    <div class="card" style="border-top:2px solid var(--accent);">
+      <div class="card-title">Active Members</div>
+      <div class="card-value">2,847</div>
+      <div class="card-delta">↑ +124 this month</div>
+    </div>
+    <div class="card" style="border-top:2px solid var(--accent3);">
+      <div class="card-title">Revenue Today</div>
+      <div class="card-value">SAR 18,420</div>
+      <div class="card-delta">↑ +8.3% vs yesterday</div>
+    </div>
+    <div class="card" style="border-top:2px solid var(--info);">
+      <div class="card-title">Check-ins Today</div>
+      <div class="card-value">347</div>
+      <div class="card-delta">↑ 47 currently inside</div>
+    </div>
+    <div class="card" style="border-top:2px solid var(--warning);">
+      <div class="card-title">Expiring (7d)</div>
+      <div class="card-value">89</div>
+      <div class="card-delta neg">↓ Needs attention</div>
+    </div>
+    <div class="card" style="border-top:2px solid var(--danger);">
+      <div class="card-title">Overdue Invoices</div>
+      <div class="card-value">12</div>
+      <div class="card-delta neg">SAR 34,200 total</div>
+    </div>
+  </div>
+
+  <div class="grid2 mb16">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Revenue Overview</div>
+          <div class="chart-sub text-muted">Monthly revenue vs target</div>
+        </div>
+        <div class="chart-tabs">
+          <button class="tab-btn active" onclick="switchChart(this,'monthly')">Monthly</button>
+          <button class="tab-btn" onclick="switchChart(this,'weekly')">Weekly</button>
+        </div>
+      </div>
+      <div style="position:relative;height:220px;">
+        <canvas id="revenueChart" role="img" aria-label="Monthly revenue chart">Revenue data</canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Membership Distribution</div>
+          <div class="chart-sub text-muted">By plan type</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:20px;">
+        <div style="position:relative;height:160px;width:160px;flex-shrink:0;">
+          <canvas id="membershipChart" role="img" aria-label="Membership types donut">Membership types</canvas>
+        </div>
+        <div style="flex:1;">
+          <div class="stat-row"><span class="stat-label">Premium</span><span class="stat-val text-accent">45%</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:45%;background:var(--accent)"></div></div></div>
+          <div class="stat-row"><span class="stat-label">Standard</span><span class="stat-val text-info">31%</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:31%;background:var(--info)"></div></div></div>
+          <div class="stat-row"><span class="stat-label">Basic</span><span class="stat-val text-success">16%</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:16%;background:var(--success)"></div></div></div>
+          <div class="stat-row"><span class="stat-label">Corporate</span><span class="stat-val text-warning">8%</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:8%;background:var(--warning)"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2 mb16">
+    <!-- Activity Heatmap -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Gym Traffic Heatmap</div>
+          <div class="chart-sub text-muted">Check-ins by hour · last 7 days</div>
+        </div>
+      </div>
+      <div id="heatmapContainer"></div>
+      <div class="flex-row mt8" style="font-size:10px;color:var(--text2);gap:6px;">
+        <span>Less</span>
+        <div style="display:flex;gap:2px;">
+          <div style="width:12px;height:12px;border-radius:2px;background:var(--bg4);"></div>
+          <div style="width:12px;height:12px;border-radius:2px;background:rgba(108,99,255,0.2);"></div>
+          <div style="width:12px;height:12px;border-radius:2px;background:rgba(108,99,255,0.45);"></div>
+          <div style="width:12px;height:12px;border-radius:2px;background:rgba(108,99,255,0.7);"></div>
+          <div style="width:12px;height:12px;border-radius:2px;background:var(--accent);"></div>
+        </div>
+        <span>More</span>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Recent Activity</div>
+        <button class="btn btn-sm" onclick="showPage('audit',document.querySelector('[onclick*=audit]'))">View all</button>
+      </div>
+      <div class="timeline">
+        <div class="tl-item"><div class="tl-dot" style="background:var(--success)"></div><div class="tl-time">2 min ago</div><div class="tl-text"><span class="tl-bold">Ahmed Al-Rashid</span> checked in via QR</div></div>
+        <div class="tl-item"><div class="tl-dot" style="background:var(--accent)"></div><div class="tl-time">8 min ago</div><div class="tl-text">New membership sold · <span class="tl-bold">Premium Annual</span> · SAR 2,400</div></div>
+        <div class="tl-item"><div class="tl-dot" style="background:var(--warning)"></div><div class="tl-time">15 min ago</div><div class="tl-text"><span class="tl-bold">Fatima Hassan</span> membership frozen (medical)</div></div>
+        <div class="tl-item"><div class="tl-dot" style="background:var(--info)"></div><div class="tl-time">32 min ago</div><div class="tl-text">Invoice <span class="tl-bold">#INV-2847</span> paid · SAR 450</div></div>
+        <div class="tl-item"><div class="tl-dot" style="background:var(--danger)"></div><div class="tl-time">1h ago</div><div class="tl-text">Low stock alert: <span class="tl-bold">Whey Protein 2kg</span> · 3 units left</div></div>
+        <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">1h 20m ago</div><div class="tl-text"><span class="tl-bold">CrossFit WOD</span> class started · 18/20 capacity</div></div>
+        <div class="tl-item"><div class="tl-dot" style="background:var(--accent3)"></div><div class="tl-time">2h ago</div><div class="tl-text">New lead from <span class="tl-bold">Instagram</span> · Khalid Nasser</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid3 mb16">
+    <div class="chart-card">
+      <div class="chart-header"><div class="chart-title">Today's Classes</div></div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="card" style="padding:12px;display:flex;align-items:center;gap:12px;">
+          <div style="width:44px;text-align:center;"><div class="fs11 text-muted">09:00</div><div class="fs11 text-muted">AM</div></div>
+          <div style="flex:1;"><div class="fw600 fs12">CrossFit WOD</div><div class="fs11 text-muted">Coach: Ali Hassan</div></div>
+          <div style="text-align:right;"><span class="badge badge-success">18/20</span></div>
+        </div>
+        <div class="card" style="padding:12px;display:flex;align-items:center;gap:12px;">
+          <div style="width:44px;text-align:center;"><div class="fs11 text-muted">11:00</div><div class="fs11 text-muted">AM</div></div>
+          <div style="flex:1;"><div class="fw600 fs12">Yoga Flow</div><div class="fs11 text-muted">Coach: Sara Ahmed</div></div>
+          <div style="text-align:right;"><span class="badge badge-warning">8/15</span></div>
+        </div>
+        <div class="card" style="padding:12px;display:flex;align-items:center;gap:12px;">
+          <div style="width:44px;text-align:center;"><div class="fs11 text-muted">06:00</div><div class="fs11 text-muted">PM</div></div>
+          <div style="flex:1;"><div class="fw600 fs12">HIIT Blast</div><div class="fs11 text-muted">Coach: Omar Khalid</div></div>
+          <div style="text-align:right;"><span class="badge badge-danger">20/20</span></div>
+        </div>
+        <div class="card" style="padding:12px;display:flex;align-items:center;gap:12px;">
+          <div style="width:44px;text-align:center;"><div class="fs11 text-muted">08:00</div><div class="fs11 text-muted">PM</div></div>
+          <div style="flex:1;"><div class="fw600 fs12">Spinning</div><div class="fs11 text-muted">Coach: Noor Salem</div></div>
+          <div style="text-align:right;"><span class="badge badge-info">12/25</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header"><div class="chart-title">POS Sales Today</div></div>
+      <div style="position:relative;height:200px;">
+        <canvas id="posChart" role="img" aria-label="POS sales by category">POS sales data</canvas>
+      </div>
+      <div class="mt8">
+        <div class="flex-between fs12"><span class="text-muted">Total Sales</span><span class="fw600">SAR 4,230</span></div>
+        <div class="flex-between fs12 mt8"><span class="text-muted">Transactions</span><span class="fw600">67</span></div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header"><div class="chart-title">CRM Pipeline</div><span class="badge badge-purple">18 leads</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+        <div class="stat-row"><span class="stat-label">🔵 New Leads</span><span class="stat-val">6</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:33%;background:var(--info)"></div></div></div>
+        <div class="stat-row"><span class="stat-label">🟡 Contacted</span><span class="stat-val">5</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:28%;background:var(--warning)"></div></div></div>
+        <div class="stat-row"><span class="stat-label">🟠 Trial</span><span class="stat-val">4</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:22%;background:var(--accent5)"></div></div></div>
+        <div class="stat-row"><span class="stat-label">🟢 Proposal</span><span class="stat-val">3</span><div class="stat-bar-wrap"><div class="stat-bar" style="width:17%;background:var(--success)"></div></div></div>
+      </div>
+      <div style="margin-top:16px;">
+        <div style="position:relative;height:100px;">
+          <canvas id="funnelChart" role="img" aria-label="CRM funnel chart">Funnel data</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expiring Members Alert -->
+  <div class="chart-card mb16">
+    <div class="chart-header">
+      <div class="chart-title">⚠️ Members Expiring This Week</div>
+      <button class="btn btn-sm btn-primary" onclick="showToast('Renewal reminders sent to 89 members','success')">Send Reminders</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Member</th><th>Plan</th><th>Expires</th><th>Value</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="expiringTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MEMBERS ============ -->
+<div id="page-members" class="page">
+  <div class="flex-between mb16">
+    <div class="section-title">Members <small>2,847 total</small></div>
+    <div class="flex-row">
+      <input type="text" placeholder="Search members..." style="width:220px;" oninput="filterMembers(this.value)" />
+      <select style="width:140px;" onchange="filterMembers('')">
+        <option>All Plans</option><option>Premium</option><option>Standard</option><option>Basic</option><option>Corporate</option>
+      </select>
+      <button class="btn btn-primary" onclick="showModal('addMemberModal')">+ Add Member</button>
+    </div>
+  </div>
+
+  <div class="grid4 mb16">
+    <div class="card"><div class="card-title">Total Active</div><div class="card-value">2,847</div></div>
+    <div class="card"><div class="card-title">New This Month</div><div class="card-value">124</div><div class="card-delta">↑ +18% vs last month</div></div>
+    <div class="card"><div class="card-title">Frozen</div><div class="card-value">43</div><div class="card-delta neg">Medical: 28 · Vacation: 15</div></div>
+    <div class="card"><div class="card-title">Avg LTV</div><div class="card-value">SAR 8,420</div></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th><input type="checkbox" /></th><th>Member</th><th>Plan</th><th>Status</th><th>Check-ins</th><th>Balance</th><th>Joined</th><th>Expires</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="membersTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MEMBERSHIPS ============ -->
+<div id="page-memberships" class="page">
+  <div class="flex-between mb16">
+    <div class="section-title">Membership Plans</div>
+    <button class="btn btn-primary" onclick="showModal('addPlanModal')">+ New Plan</button>
+  </div>
+  <div class="grid3 mb16">
+    <div class="card" style="border:1px solid var(--border2);cursor:pointer;" onclick="showModal('planDetailModal')">
+      <div class="flex-between mb8"><span class="badge badge-purple">Premium Annual</span><span class="badge badge-success">Active</span></div>
+      <div class="card-value fs24">SAR 2,400</div>
+      <div class="text-muted fs12 mt8">Per year · 1,281 subscribers</div>
+      <div class="progress mt8"><div class="progress-fill" style="width:65%;background:var(--accent)"></div></div>
+      <div class="flex-between mt8 fs11 text-muted"><span>Capacity: 1,281 / 2,000</span><span>64.1%</span></div>
+    </div>
+    <div class="card" style="cursor:pointer;" onclick="showModal('planDetailModal')">
+      <div class="flex-between mb8"><span class="badge badge-info">Standard Monthly</span><span class="badge badge-success">Active</span></div>
+      <div class="card-value fs24">SAR 280</div>
+      <div class="text-muted fs12 mt8">Per month · 882 subscribers</div>
+      <div class="progress mt8"><div class="progress-fill" style="width:44%;background:var(--info)"></div></div>
+      <div class="flex-between mt8 fs11 text-muted"><span>Capacity: 882 / 2,000</span><span>44.1%</span></div>
+    </div>
+    <div class="card" style="cursor:pointer;" onclick="showModal('planDetailModal')">
+      <div class="flex-between mb8"><span class="badge badge-gray">Basic Monthly</span><span class="badge badge-success">Active</span></div>
+      <div class="card-value fs24">SAR 180</div>
+      <div class="text-muted fs12 mt8">Per month · 455 subscribers</div>
+      <div class="progress mt8"><div class="progress-fill" style="width:23%;background:var(--text2)"></div></div>
+      <div class="flex-between mt8 fs11 text-muted"><span>Capacity: 455 / 2,000</span><span>22.8%</span></div>
+    </div>
+    <div class="card" style="cursor:pointer;" onclick="showModal('planDetailModal')">
+      <div class="flex-between mb8"><span class="badge badge-warning">Corporate</span><span class="badge badge-success">Active</span></div>
+      <div class="card-value fs24">SAR 5,000</div>
+      <div class="text-muted fs12 mt8">Per month · 12 companies · 229 employees</div>
+      <div class="progress mt8"><div class="progress-fill" style="width:38%;background:var(--warning)"></div></div>
+      <div class="flex-between mt8 fs11 text-muted"><span>12 active contracts</span><span>Avg 19 emp</span></div>
+    </div>
+    <div class="card" style="cursor:pointer;" onclick="showModal('planDetailModal')">
+      <div class="flex-between mb8"><span class="badge" style="background:rgba(255,107,107,0.15);color:var(--danger)">Family Pack</span><span class="badge badge-success">Active</span></div>
+      <div class="card-value fs24">SAR 1,400</div>
+      <div class="text-muted fs12 mt8">Per quarter · up to 4 members</div>
+      <div class="progress mt8"><div class="progress-fill" style="width:28%;background:var(--danger)"></div></div>
+      <div class="flex-between mt8 fs11 text-muted"><span>Capacity: 280 / 1,000</span><span>28.0%</span></div>
+    </div>
+    <div class="card" style="border:2px dashed var(--border2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:140px;" onclick="showModal('addPlanModal')">
+      <div style="font-size:32px;color:var(--text2);">+</div>
+      <div class="text-muted fs12">Create New Plan</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title mb16">Plan Performance</div>
+    <div style="position:relative;height:220px;">
+      <canvas id="planChart" role="img" aria-label="Plan revenue comparison">Plan data</canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BILLING ============ -->
+<div id="page-billing" class="page">
+  <div class="flex-between mb16">
+    <div class="section-title">Billing & Payments</div>
+    <div class="flex-row">
+      <button class="btn btn-sm" onclick="showToast('Running collection workflow...','info')">Run Collections</button>
+      <button class="btn btn-primary btn-sm" onclick="showModal('invoiceModal')">+ New Invoice</button>
+    </div>
+  </div>
+
+  <div class="grid4 mb16">
+    <div class="card"><div class="card-title">Revenue This Month</div><div class="card-value">SAR 487,200</div><div class="card-delta">↑ +12.4% vs last month</div></div>
+    <div class="card"><div class="card-title">Outstanding</div><div class="card-value">SAR 34,200</div><div class="card-delta neg">12 invoices overdue</div></div>
+    <div class="card"><div class="card-title">Collected Today</div><div class="card-value">SAR 18,420</div><div class="card-delta">↑ 47 transactions</div></div>
+    <div class="card"><div class="card-title">Refunds This Month</div><div class="card-value">SAR 3,180</div><div class="card-delta neg">8 refunds</div></div>
+  </div>
+
+  <div class="page-tabs">
+    <button class="page-tab active" onclick="switchTab(this,'billingAll')">All Invoices</button>
+    <button class="page-tab" onclick="switchTab(this,'billingOverdue')">Overdue</button>
+    <button class="page-tab" onclick="switchTab(this,'billingPaid')">Paid</button>
+    <button class="page-tab" onclick="switchTab(this,'billingRecurring')">Recurring</button>
+  </div>
+
+  <div class="chart-card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Invoice #</th><th>Member</th><th>Plan</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Payment Method</th><th>Actions</th></tr></thead>
+        <tbody id="billingTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============ POS ============ -->
+<div id="page-pos" class="page">
+  <div class="section-title mb16">Point of Sale</div>
+  <div class="grid2" style="height:calc(100vh - 140px);">
+    <!-- Product Grid -->
+    <div>
+      <div class="page-tabs" style="margin-bottom:12px;">
+        <button class="page-tab active" onclick="switchTab(this,'posAll')">All</button>
+        <button class="page-tab" onclick="switchTab(this,'posSupplements')">Supplements</button>
+        <button class="page-tab" onclick="switchTab(this,'posApparel')">Apparel</button>
+        <button class="page-tab" onclick="switchTab(this,'posEquip')">Equipment</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;" id="productGrid"></div>
+    </div>
+    <!-- Cart -->
+    <div class="chart-card" style="display:flex;flex-direction:column;">
+      <div class="chart-title mb16">Cart</div>
+      <div style="flex:1;overflow-y:auto;" id="cartItems">
+        <div class="text-muted fs12" style="text-align:center;margin-top:40px;">Add products to cart</div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
+        <div class="flex-between mb8"><span class="text-muted">Subtotal</span><span id="cartSubtotal">SAR 0.00</span></div>
+        <div class="flex-between mb8"><span class="text-muted">VAT (15%)</span><span id="cartTax">SAR 0.00</span></div>
+        <div class="flex-between fw600 fs14" style="margin-bottom:16px;"><span>Total</span><span id="cartTotal" class="text-accent">SAR 0.00</span></div>
+        <div class="flex-row" style="gap:8px;">
+          <button class="btn btn-sm" style="flex:1;" onclick="showModal('discountModal')">Discount</button>
+          <button class="btn btn-primary btn-sm" style="flex:2;" onclick="checkoutPOS()">💳 Checkout</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ INVENTORY ============ -->
+<div id="page-inventory" class="page">
+  <div class="flex-between mb16">
+    <div class="section-title">Inventory</div>
+    <div class="flex-row">
+      <button class="btn btn-sm" onclick="showModal('purchaseOrderModal')">+ Purchase Order</button>
+      <button class="btn btn-primary btn-sm" onclick="showModal('addProductModal')">+ Add Product</button>
+    </div>
+  </div>
+  <div class="grid4 mb16">
+    <div class="card"><div class="card-title">Total SKUs</div><div class="card-value">284</div></div>
+    <div class="card"><div class="card-title">Low Stock Alerts</div><div class="card-value text-warning">18</div><div class="card-delta neg">Requires reorder</div></div>
+    <div class="card"><div class="card-title">Inventory Value</div><div class="card-value">SAR 142,800</div></div>
+    <div class="card"><div class="card-title">Pending Orders</div><div class="card-value">5</div></div>
+  </div>
+  <div class="chart-card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>Stock</th><th>Reorder At</th><th>Cost</th><th>Sell Price</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="inventoryTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ATTENDANCE ============ -->
+<div id="page-attendance" class="page">
+  <div class="section-title mb16">Attendance & Check-in</div>
+  <div class="grid4 mb16">
+    <div class="card"><div class="card-title">In Gym Now</div><div class="card-value text-success">47</div><div class="card-delta"><span class="live-dot"></span> Live count</div></div>
+    <div class="card"><div class="card-title">Today's Check-ins</div><div class="card-value">347</div></div>
+    <div class="card"><div class="card-title">Peak Hour</div><div class="card-value">07:00 PM</div><div class="card-delta">82 members</div></div>
+    <div class="card"><div class="card-title">Avg Daily Visits</div><div class="card-value">312</div></div>
+  </div>
+  <div class="grid2 mb16">
+    <!-- Manual check-in -->
+    <div class="chart-card">
+      <div class="chart-title mb16">Manual Check-in</div>
+      <div class="form-group mb16">
+        <label>Search Member</label>
+        <input type="text" placeholder="Name, member ID or phone..." id="checkinSearch" />
+      </div>
+      <div id="checkinResults" style="min-height:40px;"></div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+        <div class="chart-title mb8">Quick Scan</div>
+        <div class="kiosk-card">
+          <div style="font-size:32px;">📱</div>
+          <div class="fw600">QR / Barcode Check-in</div>
+          <div class="text-muted fs12">Point scanner at member card</div>
+          <button class="btn btn-primary" onclick="showToast('Scanner active — waiting for QR code','info')">Activate Scanner</button>
+        </div>
+      </div>
+    </div>
+    <!-- Live log -->
+    <div class="chart-card" style="overflow-y:auto;max-height:400px;">
+      <div class="chart-title mb16">Live Check-in Log</div>
+      <div id="checkinLog"></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title mb16">Weekly Attendance Pattern</div>
+    <div style="position:relative;height:200px;">
+      <canvas id="attendanceChart" role="img" aria-label="Weekly attendance chart">Attendance data</canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CRM ============ -->
+<div id="page-crm" class="page">
+  <div class="flex-between mb16">
+    <div class="section-title">CRM Pipeline <small>18 active leads</small></div>
+    <div class="flex-row">
+      <button class="btn btn-sm" onclick="showToast('Bulk follow-up scheduled','success')">Bulk Follow-up</button>
+      <button class="btn btn-primary btn-sm" onclick="showModal('addLeadModal')">+ Add Lead</button>
+    </div>
+  </div>
+
+  <div class="grid4 mb16">
+    <div class="card"><div class="card-title">Leads This Month</div><div class="card-value">47</div><div class="card-delta">↑ +32% vs last month</div></div>
+    <div class="card"><div class="card-title">Conversion Rate</div><div class="card-value">38.3%</div><div class="card-delta">↑ +5.2pp</div></div>
+    <div class="card"><div class="card-title">Avg Sales Cycle</div><div class="card-value">4.2 days</div></div>
+    <div class="card"><div class="card-title">Revenue from CRM</div><div class="card-value">SAR 68,400</div></div>
+  </div>
+
+  <!-- Kanban Pipeline -->
+  <div class="pipeline" id="crmPipeline"></div>
+</div>
+
+<!-- ============ STAFF ============ -->
+<div id="page-staff" class="page">
+  <div class="flex-between mb16">
+    <div class="section-title">Staff Management</div>
+    <button class="btn btn-primary btn-sm" onclick="showModal('addStaffModal')">+ Add Employee</button>
+  </div>
+  <div class="grid4 mb16">
+    <div class="card"><div class="card-title">Total Staff</div><div class="card-value">42</div></div>
+    <div class="card"><div class="card-title">Present Today</div><div class="card-value text-success">38</div></div>
+    <div class="card"><div class="card-title">On Leave</div><div class="card-value text-warning">4</div></div>
+    <div class="card"><div class="card-title">Certifications Due</div><div class="card-value text-danger">6</div></div>
+  </div>
+  <div class="chart-card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Employee</th><th>Role</th><th>Department</th><th>Schedule</th><th>Status</th><th>KPI Score</th><th>Actions</th></tr></thead>
+        <tbody id="staffTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PAYROLL ============ -->
+<div id="page-payroll" class="page">
+  <div class="flex-between mb16">
+    <div class="section-title">Payroll</div>
+    <button class="btn btn-primary btn-sm" onclick="showToast('Payroll run initiated for June 2026','success')">Run Payroll</button>
+  </div>
+  <div class="grid4 mb16">
+    <div class="card"><div class="card-title">Monthly Payroll</div><div class="card-value">SAR 184,200</div></div>
+    <div class="card"><div class="card-title">Commissions</div><div class="card-value">SAR 12,400</div></div>
+    <div class="card"><div class="card-title">Next Pay Date</div><div class="card-value">June 30</div></div>
+    <div class="card"><div class="card-title">Pending Approvals</div><div class="card-value text-warning">3</div></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title mb16">Payroll Breakdown</div>
+    <div style="position:relative;height:220px;">
+      <canvas id="payrollChart" role="img" aria-label="Payroll breakdown chart">Payroll data</canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SCHEDULING ============ -->
+<div id="page-scheduling" class="page">
+  <div class="flex-between mb16">
+    <div class="section-title">Schedule</div>
+    <div class="flex-row">
+      <div class="page-tabs" style="margin:0;">
+        <button class="page-tab active" onclick="switchTab(this,'schedDay')">Day</button>
+        <button class="page-tab" onclick="switchTab(this,'schedWeek')">Week</button>
+        <button class="page-tab" onclick="switchTab(this,'schedMonth')">Month</button>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="showModal('addClassModal')">+ Add Class</button>
+    </div>
+  </div>
+  <div id="scheduleCalendar" class="chart-card"></div>
+</div>
+
+<!-- ============ MARKETING ============ -->
+<div id="page-marketing" class="page">
+  <div class="flex-between mb16">
+    <div class="section-title">Marketing Campaigns</div>
+    <button class="btn btn-primary btn-sm" onclick="showModal('campaignModal')">+ New Campaign</button>
+  </div>
+  <div class="grid4 mb16">
+    <div class="card"><div class="card-title">Active Campaigns</div><div class="card-value">5</div></div>
+    <div class="card"><div class="card-title">Emails Sent</div><div class="card-value">12,400</div><div class="card-delta">72% open rate</div></div>
+    <div class="card"><div class="card-title">SMS Sent</div><div class="card-value">3,280</div><div class="card-delta">94% delivered</div></div>
+    <div class="card"><div class="card-title">Conversion</div><div class="card-value">8.4%</div></div>
+  </div>
+  <div class="chart-card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Campaign</th><th>Type</th><th>Status</th><th>Sent</th><th>Opened</th><th>Converted</th><th>ROI</th></tr></thead>
+        <tbody>
+          <tr><td><span class="fw600">Ramadan Promo 2026</span></td><td><span class="badge badge-info">Email + SMS</span></td><td><span class="badge badge-success">Active</span></td><td>4,200</td><td>3,024 <span class="text-muted fs11">(72%)</span></td><td>88 <span class="text-success fs11">↑</span></td><td class="text-success fw600">+840%</td></tr>
+          <tr><td><span class="fw600">Summer Fitness Challenge</span></td><td><span class="badge badge-purple">WhatsApp</span></td><td><span class="badge badge-success">Active</span></td><td>1,800</td><td>1,674 <span class="text-muted fs11">(93%)</span></td><td>42 <span class="text-success fs11">↑</span></td><td class="text-success fw600">+320%</td></tr>
+          <tr><td><span class="fw600">Win-Back Inactive Members</span></td><td><span class="badge badge-warning">Email</span></td><td><span class="badge badge-warning">Draft</span></td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td><span class="fw600">Referral Program Q2</span></td><td><span class="badge badge-success">Multi-channel</span></td><td><span class="badge badge-gray">Ended</span></td><td>6,400</td><td>4,160 <span class="text-muted fs11">(65%)</span></td><td>112</td><td class="text-success fw600">+1,240%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============ REPORTS ============ -->
+<div id="page-reports" class="page">
+  <div class="section-title mb16">Business Intelligence</div>
+  <div class="grid3 mb16">
+    <div class="chart-card">
+      <div class="chart-title mb16">Retention Rate</div>
+      <div style="text-align:center;padding:16px 0;">
+        <div class="fs32 fw600 text-success">87.4%</div>
+        <div class="text-muted fs12">Monthly retention</div>
+        <div class="progress mt8"><div class="progress-fill" style="width:87%;background:var(--success)"></div></div>
+      </div>
+      <div style="position:relative;height:120px;">
+        <canvas id="retentionChart" role="img" aria-label="Retention trend">Retention data</canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title mb16">Revenue by Branch</div>
+      <div style="position:relative;height:200px;">
+        <canvas id="branchRevenueChart" role="img" aria-label="Revenue by branch">Branch revenue</canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title mb16">Member Acquisition Sources</div>
+      <div style="position:relative;height:200px;">
+        <canvas id="sourceChart" role="img" aria-label="Member sources chart">Source data</canvas>
+      </div>
+    </div>
+  </div>
+  <div class="grid2 mb16">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Revenue vs Target</div>
+        <div class="chart-tabs">
+          <button class="tab-btn active">2026</button>
+        </div>
+      </div>
+      <div style="position:relative;height:200px;">
+        <canvas id="revenueTargetChart" role="img" aria-label="Revenue vs target">Revenue vs target</canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title mb16">Churn Analysis</div>
+      <div style="position:relative;height:200px;">
+        <canvas id="churnChart" role="img" aria-label="Churn chart">Churn data</canvas>
+      </div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="flex-between mb16">
+      <div class="chart-title">Available Reports</div>
+      <button class="btn btn-sm" onclick="showToast('Scheduling report...','info')">Schedule Report</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+      <div class="card" style="cursor:pointer;" onclick="showToast('Generating membership report PDF...','info')"><div class="fw600 fs12 mb8">📊 Membership Report</div><div class="text-muted fs11">Active, expired, frozen</div></div>
+      <div class="card" style="cursor:pointer;" onclick="showToast('Generating revenue report PDF...','info')"><div class="fw600 fs12 mb8">💰 Revenue Report</div><div class="text-muted fs11">Billing & collections</div></div>
+      <div class="card" style="cursor:pointer;" onclick="showToast('Generating attendance report PDF...','info')"><div class="fw600 fs12 mb8">✅ Attendance Report</div><div class="text-muted fs11">Check-in analytics</div></div>
+      <div class="card" style="cursor:pointer;" onclick="showToast('Generating staff report PDF...','info')"><div class="fw600 fs12 mb8">👥 Staff Report</div><div class="text-muted fs11">KPIs & performance</div></div>
+      <div class="card" style="cursor:pointer;" onclick="showToast('Generating inventory report PDF...','info')"><div class="fw600 fs12 mb8">📦 Inventory Report</div><div class="text-muted fs11">Stock & valuation</div></div>
+      <div class="card" style="cursor:pointer;" onclick="showToast('Generating CRM report PDF...','info')"><div class="fw600 fs12 mb8">🎯 CRM Report</div><div class="text-muted fs11">Leads & conversions</div></div>
+      <div class="card" style="cursor:pointer;" onclick="showToast('Generating branch report PDF...','info')"><div class="fw600 fs12 mb8">🏢 Branch Report</div><div class="text-muted fs11">Multi-location analysis</div></div>
+      <div class="card" style="cursor:pointer;" onclick="showToast('Generating financial report PDF...','info')"><div class="fw600 fs12 mb8">📋 Financial Report</div><div class="text-muted fs11">P&L, cash flow</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BRANCHES ============ -->
+<div id="page-branches" class="page">
+  <div class="flex-between mb16">
+    <div class="section-title">Branch Management</div>
+    <button class="btn btn-primary btn-sm" onclick="showModal('addBranchModal')">+ Add Branch</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;" id="branchCards"></div>
+</div>
+
+<!-- ============ SETTINGS ============ -->
+<div id="page-settings" class="page">
+  <div class="section-title mb16">System Settings</div>
+  <div class="grid2">
+    <div>
+      <div class="chart-card mb16">
+        <div class="chart-title mb16">General</div>
+        <div class="form-row cols2">
+          <div class="form-group"><label>Gym Name</label><input value="FitZone Elite Gym" /></div>
+          <div class="form-group"><label>Currency</label><select><option>SAR - Saudi Riyal</option><option>AED - UAE Dirham</option><option>USD</option></select></div>
+        </div>
+        <div class="form-row cols2">
+          <div class="form-group"><label>Tax Rate (%)</label><input type="number" value="15" /></div>
+          <div class="form-group"><label>Timezone</label><select><option>Asia/Riyadh</option><option>UTC</option></select></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="showToast('Settings saved','success')">Save Changes</button>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title mb16">Security</div>
+        <div class="flex-between mb8"><span class="fs12">MFA Required</span><label style="cursor:pointer;"><input type="checkbox" checked /> Enabled</label></div>
+        <div class="flex-between mb8"><span class="fs12">Session Timeout</span><select style="width:120px;"><option>30 minutes</option><option>1 hour</option><option>4 hours</option></select></div>
+        <div class="flex-between mb8"><span class="fs12">Audit Logging</span><label style="cursor:pointer;"><input type="checkbox" checked /> Enabled</label></div>
+        <button class="btn btn-sm mt8" onclick="showToast('Security settings updated','success')">Save Security</button>
+      </div>
+    </div>
+    <div>
+      <div class="chart-card mb16">
+        <div class="chart-title mb16">Notification Templates</div>
+        <div class="form-group mb8"><label>Membership Expiry (SMS)</label><textarea>Hi {name}, your {plan} membership expires on {date}. Renew now at our front desk or call +966-XX-XXXXXX.</textarea></div>
+        <div class="form-group mb8"><label>Payment Reminder (Email)</label><textarea>Dear {name}, invoice #{invoice_id} of {amount} SAR is due on {date}. Please visit us or pay online.</textarea></div>
+        <button class="btn btn-primary btn-sm" onclick="showToast('Templates saved','success')">Save Templates</button>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title mb16">RBAC Roles</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div class="flex-between" style="padding:8px;background:var(--bg3);border-radius:6px;"><span class="fs12">Super Admin</span><span class="badge badge-danger">Full Access</span></div>
+          <div class="flex-between" style="padding:8px;background:var(--bg3);border-radius:6px;"><span class="fs12">Branch Manager</span><span class="badge badge-warning">Branch Access</span></div>
+          <div class="flex-between" style="padding:8px;background:var(--bg3);border-radius:6px;"><span class="fs12">Front Desk</span><span class="badge badge-info">Limited Access</span></div>
+          <div class="flex-between" style="padding:8px;background:var(--bg3);border-radius:6px;"><span class="fs12">Trainer</span><span class="badge badge-success">Schedule + Members</span></div>
+          <div class="flex-between" style="padding:8px;background:var(--bg3);border-radius:6px;"><span class="fs12">Accountant</span><span class="badge badge-purple">Finance Only</span></div>
+        </div>
+        <button class="btn btn-sm mt8" onclick="showToast('Role matrix updated','success')">Manage Permissions</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ AUDIT LOG ============ -->
+<div id="page-audit" class="page">
+  <div class="flex-between mb16">
+    <div class="section-title">Audit Log</div>
+    <button class="btn btn-sm" onclick="showToast('Audit log exported','success')">Export CSV</button>
+  </div>
+  <div class="chart-card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Timestamp</th><th>User</th><th>Role</th><th>Action</th><th>Entity</th><th>IP Address</th><th>Result</th></tr></thead>
+        <tbody id="auditTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- ============ MODALS ============ -->
+<div class="modal-overlay" id="addMemberModal">
+  <div class="modal">
+    <div class="modal-title">Add New Member <button class="modal-close" onclick="closeModal('addMemberModal')">×</button></div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>First Name</label><input placeholder="Ahmed" /></div>
+      <div class="form-group"><label>Last Name</label><input placeholder="Al-Rashid" /></div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Phone</label><input placeholder="+966 5X XXX XXXX" /></div>
+      <div class="form-group"><label>Email</label><input type="email" placeholder="ahmed@email.com" /></div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Membership Plan</label>
+        <select><option>Premium Annual (SAR 2,400)</option><option>Standard Monthly (SAR 280)</option><option>Basic (SAR 180)</option></select>
+      </div>
+      <div class="form-group"><label>Start Date</label><input type="date" /></div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Gender</label><select><option>Male</option><option>Female</option></select></div>
+      <div class="form-group"><label>Date of Birth</label><input type="date" /></div>
+    </div>
+    <div class="form-group mb16"><label>Emergency Contact</label><input placeholder="Name - Phone" /></div>
+    <div class="flex-row" style="justify-content:flex-end;gap:8px;">
+      <button class="btn" onclick="closeModal('addMemberModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addMember()">Add Member</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="invoiceModal">
+  <div class="modal">
+    <div class="modal-title">Create Invoice <button class="modal-close" onclick="closeModal('invoiceModal')">×</button></div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Member</label><input placeholder="Search member..." /></div>
+      <div class="form-group"><label>Invoice Date</label><input type="date" /></div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Due Date</label><input type="date" /></div>
+      <div class="form-group"><label>Payment Method</label><select><option>Cash</option><option>Card</option><option>Bank Transfer</option></select></div>
+    </div>
+    <div class="form-group mb16"><label>Description</label><textarea placeholder="Membership renewal - Premium Annual..."></textarea></div>
+    <div class="form-row cols3">
+      <div class="form-group"><label>Amount (SAR)</label><input type="number" placeholder="2400" /></div>
+      <div class="form-group"><label>Discount (%)</label><input type="number" placeholder="0" /></div>
+      <div class="form-group"><label>Tax (15%)</label><input type="number" placeholder="360" readonly /></div>
+    </div>
+    <div class="flex-row" style="justify-content:flex-end;gap:8px;margin-top:8px;">
+      <button class="btn" onclick="closeModal('invoiceModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="showToast('Invoice created successfully','success');closeModal('invoiceModal')">Create Invoice</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addLeadModal">
+  <div class="modal">
+    <div class="modal-title">Add Lead <button class="modal-close" onclick="closeModal('addLeadModal')">×</button></div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Full Name</label><input placeholder="Khalid Nasser" /></div>
+      <div class="form-group"><label>Phone</label><input placeholder="+966 5X XXX XXXX" /></div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Source</label><select><option>Instagram</option><option>Walk-in</option><option>Referral</option><option>Google</option><option>Website</option></select></div>
+      <div class="form-group"><label>Interest</label><select><option>Premium Annual</option><option>Standard Monthly</option><option>PT Sessions</option></select></div>
+    </div>
+    <div class="form-group mb16"><label>Notes</label><textarea placeholder="Interested in morning PT sessions..."></textarea></div>
+    <div class="flex-row" style="justify-content:flex-end;gap:8px;">
+      <button class="btn" onclick="closeModal('addLeadModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="showToast('Lead added to pipeline','success');closeModal('addLeadModal')">Add Lead</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="quickAddModal">
+  <div class="modal" style="width:400px;">
+    <div class="modal-title">Quick Add <button class="modal-close" onclick="closeModal('quickAddModal')">×</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <button class="card" style="cursor:pointer;text-align:left;" onclick="closeModal('quickAddModal');showModal('addMemberModal')"><div style="font-size:24px;mb:8px;">👤</div><div class="fw600 fs12 mt8">New Member</div></button>
+      <button class="card" style="cursor:pointer;text-align:left;" onclick="closeModal('quickAddModal');showModal('addLeadModal')"><div style="font-size:24px;">🎯</div><div class="fw600 fs12 mt8">New Lead</div></button>
+      <button class="card" style="cursor:pointer;text-align:left;" onclick="closeModal('quickAddModal');showModal('invoiceModal')"><div style="font-size:24px;">💳</div><div class="fw600 fs12 mt8">New Invoice</div></button>
+      <button class="card" style="cursor:pointer;text-align:left;" onclick="closeModal('quickAddModal');showToast('Check-in mode activated','info')"><div style="font-size:24px;">✅</div><div class="fw600 fs12 mt8">Check-in</div></button>
+      <button class="card" style="cursor:pointer;text-align:left;" onclick="closeModal('quickAddModal');showModal('addClassModal')"><div style="font-size:24px;">📅</div><div class="fw600 fs12 mt8">New Class</div></button>
+      <button class="card" style="cursor:pointer;text-align:left;" onclick="closeModal('quickAddModal');showModal('addStaffModal')"><div style="font-size:24px;">👥</div><div class="fw600 fs12 mt8">New Staff</div></button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="branchModal">
+  <div class="modal" style="width:360px;">
+    <div class="modal-title">Select Branch <button class="modal-close" onclick="closeModal('branchModal')">×</button></div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div class="card" style="cursor:pointer;border-color:var(--accent);background:rgba(108,99,255,0.05);" onclick="showToast('Switched to Al Malaz','success');closeModal('branchModal')"><div class="fw600 fs12">Al Malaz Branch</div><div class="text-muted fs11">Riyadh · 847 active members</div></div>
+      <div class="card" style="cursor:pointer;" onclick="showToast('Switched to Al Olaya','success');closeModal('branchModal')"><div class="fw600 fs12">Al Olaya Branch</div><div class="text-muted fs11">Riyadh · 623 active members</div></div>
+      <div class="card" style="cursor:pointer;" onclick="showToast('Switched to Jeddah Branch','success');closeModal('branchModal')"><div class="fw600 fs12">Jeddah Main</div><div class="text-muted fs11">Jeddah · 512 active members</div></div>
+      <div class="card" style="cursor:pointer;background:rgba(108,99,255,0.05);" onclick="showToast('Viewing all branches','info');closeModal('branchModal')"><div class="fw600 fs12 text-accent">🌐 All Branches (View)</div><div class="text-muted fs11">Consolidated view</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addClassModal">
+  <div class="modal">
+    <div class="modal-title">Add Class / Session <button class="modal-close" onclick="closeModal('addClassModal')">×</button></div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Class Name</label><input placeholder="CrossFit WOD" /></div>
+      <div class="form-group"><label>Trainer</label><select><option>Ali Hassan</option><option>Sara Ahmed</option><option>Omar Khalid</option></select></div>
+    </div>
+    <div class="form-row cols3">
+      <div class="form-group"><label>Date</label><input type="date" /></div>
+      <div class="form-group"><label>Start Time</label><input type="time" /></div>
+      <div class="form-group"><label>Duration (min)</label><input type="number" value="60" /></div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Capacity</label><input type="number" value="20" /></div>
+      <div class="form-group"><label>Room</label><select><option>Main Floor</option><option>Studio A</option><option>Spinning Room</option></select></div>
+    </div>
+    <div class="flex-row" style="justify-content:flex-end;gap:8px;margin-top:8px;">
+      <button class="btn" onclick="closeModal('addClassModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="showToast('Class added to schedule','success');closeModal('addClassModal')">Add Class</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addStaffModal">
+  <div class="modal">
+    <div class="modal-title">Add Employee <button class="modal-close" onclick="closeModal('addStaffModal')">×</button></div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Full Name</label><input placeholder="Mohammed Al-Ghamdi" /></div>
+      <div class="form-group"><label>Role</label><select><option>Trainer</option><option>Front Desk</option><option>Sales Rep</option><option>Manager</option><option>Accountant</option></select></div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Phone</label><input placeholder="+966 5X XXX XXXX" /></div>
+      <div class="form-group"><label>Salary (SAR/month)</label><input type="number" placeholder="5000" /></div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Department</label><select><option>Operations</option><option>Sales</option><option>Finance</option><option>Training</option></select></div>
+      <div class="form-group"><label>Start Date</label><input type="date" /></div>
+    </div>
+    <div class="flex-row" style="justify-content:flex-end;gap:8px;margin-top:8px;">
+      <button class="btn" onclick="closeModal('addStaffModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="showToast('Employee added successfully','success');closeModal('addStaffModal')">Add Employee</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="planDetailModal">
+  <div class="modal">
+    <div class="modal-title">Plan Details <button class="modal-close" onclick="closeModal('planDetailModal')">×</button></div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Plan Name</label><input value="Premium Annual" /></div>
+      <div class="form-group"><label>Price (SAR)</label><input type="number" value="2400" /></div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Duration</label><select><option>Annual</option><option>Monthly</option><option>Quarterly</option></select></div>
+      <div class="form-group"><label>Max Capacity</label><input type="number" value="2000" /></div>
+    </div>
+    <div class="form-group mb8"><label>Features</label><textarea>Unlimited gym access\nGroup classes included\nLocker room access\n1 guest pass/month\nFitness assessment</textarea></div>
+    <div class="flex-row" style="justify-content:flex-end;gap:8px;margin-top:8px;">
+      <button class="btn btn-danger btn-sm" onclick="showToast('Plan deactivated','warning');closeModal('planDetailModal')">Deactivate</button>
+      <button class="btn" onclick="closeModal('planDetailModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="showToast('Plan updated','success');closeModal('planDetailModal')">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="discountModal">
+  <div class="modal" style="width:340px;">
+    <div class="modal-title">Apply Discount <button class="modal-close" onclick="closeModal('discountModal')">×</button></div>
+    <div class="form-group mb8"><label>Discount Type</label><select><option>Percentage (%)</option><option>Fixed Amount (SAR)</option><option>Coupon Code</option></select></div>
+    <div class="form-group mb16"><label>Value</label><input type="number" placeholder="10" /></div>
+    <div class="flex-row" style="justify-content:flex-end;gap:8px;">
+      <button class="btn" onclick="closeModal('discountModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="showToast('Discount applied','success');closeModal('discountModal')">Apply</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addBranchModal">
+  <div class="modal">
+    <div class="modal-title">Add Branch <button class="modal-close" onclick="closeModal('addBranchModal')">×</button></div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Branch Name</label><input placeholder="Al-Nakheel Branch" /></div>
+      <div class="form-group"><label>City</label><input placeholder="Riyadh" /></div>
+    </div>
+    <div class="form-group mb8"><label>Address</label><textarea placeholder="Street, District, City"></textarea></div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Manager</label><input placeholder="Select manager..." /></div>
+      <div class="form-group"><label>Capacity</label><input type="number" placeholder="500" /></div>
+    </div>
+    <div class="flex-row" style="justify-content:flex-end;gap:8px;margin-top:8px;">
+      <button class="btn" onclick="closeModal('addBranchModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="showToast('Branch created','success');closeModal('addBranchModal')">Create Branch</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="purchaseOrderModal">
+  <div class="modal">
+    <div class="modal-title">New Purchase Order <button class="modal-close" onclick="closeModal('purchaseOrderModal')">×</button></div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Supplier</label><select><option>NutriTech Arabia</option><option>FitGear KSA</option><option>SportZone</option></select></div>
+      <div class="form-group"><label>Expected Delivery</label><input type="date" /></div>
+    </div>
+    <div class="form-group mb8"><label>Items</label><textarea placeholder="Product - Quantity - Unit Cost..."></textarea></div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Total (SAR)</label><input type="number" /></div>
+      <div class="form-group"><label>Payment Terms</label><select><option>Net 30</option><option>Net 15</option><option>COD</option></select></div>
+    </div>
+    <div class="flex-row" style="justify-content:flex-end;gap:8px;margin-top:8px;">
+      <button class="btn" onclick="closeModal('purchaseOrderModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="showToast('Purchase order created','success');closeModal('purchaseOrderModal')">Submit Order</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addProductModal">
+  <div class="modal">
+    <div class="modal-title">Add Product <button class="modal-close" onclick="closeModal('addProductModal')">×</button></div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Product Name</label><input placeholder="Whey Protein 2kg" /></div>
+      <div class="form-group"><label>Category</label><select><option>Supplements</option><option>Apparel</option><option>Equipment</option><option>Accessories</option></select></div>
+    </div>
+    <div class="form-row cols3">
+      <div class="form-group"><label>SKU</label><input placeholder="PRO-WHY-2KG" /></div>
+      <div class="form-group"><label>Cost (SAR)</label><input type="number" /></div>
+      <div class="form-group"><label>Sell Price (SAR)</label><input type="number" /></div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Initial Stock</label><input type="number" value="50" /></div>
+      <div class="form-group"><label>Reorder Level</label><input type="number" value="10" /></div>
+    </div>
+    <div class="flex-row" style="justify-content:flex-end;gap:8px;margin-top:8px;">
+      <button class="btn" onclick="closeModal('addProductModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="showToast('Product added to inventory','success');closeModal('addProductModal')">Add Product</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="campaignModal">
+  <div class="modal">
+    <div class="modal-title">New Campaign <button class="modal-close" onclick="closeModal('campaignModal')">×</button></div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Campaign Name</label><input placeholder="Summer Promo 2026" /></div>
+      <div class="form-group"><label>Type</label><select><option>Email</option><option>SMS</option><option>WhatsApp</option><option>Multi-channel</option></select></div>
+    </div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Target Segment</label><select><option>All Members</option><option>Expiring Soon</option><option>Inactive 30d</option><option>Premium Only</option></select></div>
+      <div class="form-group"><label>Send Date</label><input type="datetime-local" /></div>
+    </div>
+    <div class="form-group mb16"><label>Message</label><textarea placeholder="Hi {name}, don't miss our summer special..."></textarea></div>
+    <div class="flex-row" style="justify-content:flex-end;gap:8px;">
+      <button class="btn" onclick="closeModal('campaignModal')">Cancel</button>
+      <button class="btn btn-sm" onclick="showToast('Campaign saved as draft','info');closeModal('campaignModal')">Save Draft</button>
+      <button class="btn btn-primary" onclick="showToast('Campaign scheduled successfully','success');closeModal('campaignModal')">Schedule</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="addPlanModal">
+  <div class="modal">
+    <div class="modal-title">Create Membership Plan <button class="modal-close" onclick="closeModal('addPlanModal')">×</button></div>
+    <div class="form-row cols2">
+      <div class="form-group"><label>Plan Name</label><input placeholder="VIP Platinum" /></div>
+      <div class="form-group"><label>Type</label><select><option>Individual</option><option>Family</option><option>Corporate</option></select></div>
+    </div>
+    <div class="form-row cols3">
+      <div class="form-group"><label>Price (SAR)</label><input type="number" /></div>
+      <div class="form-group"><label>Billing Cycle</label><select><option>Monthly</option><option>Quarterly</option><option>Annual</option></select></div>
+      <div class="form-group"><label>Freeze Allowed</label><select><option>Yes</option><option>No</option></select></div>
+    </div>
+    <div class="form-group mb16"><label>Features (one per line)</label><textarea placeholder="Unlimited access&#10;Free classes&#10;Towel service"></textarea></div>
+    <div class="flex-row" style="justify-content:flex-end;gap:8px;">
+      <button class="btn" onclick="closeModal('addPlanModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="showToast('Plan created','success');closeModal('addPlanModal')">Create Plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<script>
+// ===================== DATA =====================
+const members = [
+  {id:'M-001',name:'Ahmed Al-Rashid',phone:'+966 50 123 4567',plan:'Premium Annual',status:'active',checkins:142,balance:0,joined:'Jan 2025',expires:'Jan 2026'},
+  {id:'M-002',name:'Fatima Hassan',phone:'+966 55 234 5678',plan:'Standard Monthly',status:'frozen',checkins:88,balance:280,joined:'Mar 2025',expires:'Jun 2026'},
+  {id:'M-003',name:'Omar Khalid',phone:'+966 54 345 6789',plan:'Premium Annual',status:'active',checkins:203,balance:0,joined:'Dec 2024',expires:'Dec 2025'},
+  {id:'M-004',name:'Noor Salem',phone:'+966 56 456 7890',plan:'Basic Monthly',status:'active',checkins:45,balance:180,joined:'May 2025',expires:'Jul 2025'},
+  {id:'M-005',name:'Khalid Nasser',phone:'+966 57 567 8901',plan:'Corporate',status:'active',checkins:167,balance:0,joined:'Aug 2024',expires:'Aug 2025'},
+  {id:'M-006',name:'Sara Mohammed',phone:'+966 58 678 9012',plan:'Family Pack',status:'active',checkins:92,balance:0,joined:'Feb 2025',expires:'May 2026'},
+  {id:'M-007',name:'Ali Hassan',phone:'+966 59 789 0123',plan:'Premium Annual',status:'active',checkins:310,balance:0,joined:'Jun 2024',expires:'Jun 2025'},
+  {id:'M-008',name:'Maha Al-Ghamdi',phone:'+966 50 890 1234',plan:'Standard Monthly',status:'expired',checkins:12,balance:280,joined:'Nov 2024',expires:'Jun 2025'},
+];
+
+const billingData = [
+  {inv:'INV-2847',member:'Ahmed Al-Rashid',plan:'Premium Annual',amount:'SAR 2,400',due:'Jun 15, 2026',status:'paid',method:'Card'},
+  {inv:'INV-2846',member:'Fatima Hassan',plan:'Standard Monthly',amount:'SAR 280',due:'Jun 10, 2026',status:'overdue',method:'Cash'},
+  {inv:'INV-2845',member:'Omar Khalid',plan:'Premium Annual',amount:'SAR 2,400',due:'Jun 18, 2026',status:'pending',method:'Bank Transfer'},
+  {inv:'INV-2844',member:'Noor Salem',plan:'Basic Monthly',amount:'SAR 180',due:'Jun 8, 2026',status:'overdue',method:'Cash'},
+  {inv:'INV-2843',member:'Khalid Nasser',plan:'Corporate',amount:'SAR 5,000',due:'Jun 30, 2026',status:'pending',method:'Bank Transfer'},
+  {inv:'INV-2842',member:'Sara Mohammed',plan:'Family Pack',amount:'SAR 1,400',due:'Jun 5, 2026',status:'paid',method:'Card'},
+];
+
+const inventoryData = [
+  {sku:'PRO-WHY-2KG',name:'Whey Protein 2kg Vanilla',cat:'Supplements',stock:8,reorder:10,cost:180,sell:280,status:'low'},
+  {sku:'PRE-C4-200G',name:'C4 Pre-workout 200g',cat:'Supplements',stock:24,reorder:10,cost:120,sell:195,status:'ok'},
+  {sku:'APP-TEE-BLK',name:'GymOS T-Shirt Black',cat:'Apparel',stock:45,reorder:20,cost:40,sell:89,status:'ok'},
+  {sku:'APP-SHO-BLU',name:'Performance Shorts Blue',cat:'Apparel',stock:3,reorder:15,cost:55,sell:120,status:'low'},
+  {sku:'EQP-GLP-MED',name:'Lifting Gloves Medium',cat:'Equipment',stock:18,reorder:8,cost:65,sell:140,status:'ok'},
+  {sku:'PRO-BCAA-300',name:'BCAA 300g Berry',cat:'Supplements',stock:0,reorder:15,cost:90,sell:155,status:'out'},
+  {sku:'ACC-BOT-1L',name:'Water Bottle 1L',cat:'Accessories',stock:32,reorder:10,cost:25,sell:55,status:'ok'},
+];
+
+const staffData = [
+  {name:'Ali Hassan',role:'Head Trainer',dept:'Training',schedule:'Sun-Thu 07:00-15:00',status:'present',kpi:94},
+  {name:'Sara Ahmed',role:'Yoga Instructor',dept:'Training',schedule:'Sat-Wed 09:00-17:00',status:'present',kpi:91},
+  {name:'Omar Rashid',role:'Branch Manager',dept:'Operations',schedule:'Sat-Wed 08:00-17:00',status:'present',kpi:88},
+  {name:'Noor Khalid',role:'Front Desk',dept:'Operations',schedule:'Sun-Thu 06:00-14:00',status:'leave',kpi:85},
+  {name:'Mohammed Salem',role:'Sales Rep',dept:'Sales',schedule:'Sat-Wed 10:00-18:00',status:'present',kpi:92},
+  {name:'Hana Al-Otaibi',role:'Accountant',dept:'Finance',schedule:'Sun-Thu 08:00-16:00',status:'present',kpi:97},
+];
+
+const crmLeads = {
+  'New Leads': [{name:'Khalid Nasser',sub:'Instagram · PT Interest',amt:'SAR 2,400'},{name:'Rania Al-Malik',sub:'Walk-in · Standard',amt:'SAR 280'},{name:'Tariq Hassan',sub:'Referral · Premium',amt:'SAR 2,400'}],
+  'Contacted': [{name:'Yasmin Al-Fahad',sub:'Called 3x · Interested',amt:'SAR 280'},{name:'Abdullah Saad',sub:'WhatsApp Follow-up',amt:'SAR 2,400'}],
+  'Trial': [{name:'Lina Mostafa',sub:'3-day trial active',amt:'SAR 180'},{name:'Faris Al-Qahtani',sub:'Trial ends Jun 16',amt:'SAR 2,400'}],
+  'Proposal Sent': [{name:'Majda Al-Shehri',sub:'Proposal: Annual Plan',amt:'SAR 2,400'}],
+  'Won': [{name:'Saad Al-Dossari',sub:'Closed · Premium Annual',amt:'SAR 2,400'},{name:'Hind Bahobail',sub:'Closed · Standard',amt:'SAR 280'}],
+};
+
+const auditData = [
+  {ts:'2026-06-13 10:42:18',user:'Sarah Ahmed',role:'Super Admin',action:'Member Created',entity:'M-2848 Khalid Nasser',ip:'192.168.1.101',result:'success'},
+  {ts:'2026-06-13 10:38:05',user:'Omar Rashid',role:'Branch Manager',action:'Invoice Paid',entity:'INV-2847 SAR 2,400',ip:'192.168.1.108',result:'success'},
+  {ts:'2026-06-13 10:22:47',user:'Ali Hassan',role:'Trainer',action:'Class Updated',entity:'CrossFit WOD 09:00',ip:'192.168.1.115',result:'success'},
+  {ts:'2026-06-13 10:14:33',user:'Hana Al-Otaibi',role:'Accountant',action:'Report Exported',entity:'Revenue Report Jun 2026',ip:'192.168.1.122',result:'success'},
+  {ts:'2026-06-13 09:58:12',user:'Noor Khalid',role:'Front Desk',action:'Check-in',entity:'M-001 Ahmed Al-Rashid',ip:'192.168.1.105',result:'success'},
+  {ts:'2026-06-13 09:45:00',user:'Sarah Ahmed',role:'Super Admin',action:'Role Permission Changed',entity:'Sales Rep → CRM Access',ip:'192.168.1.101',result:'success'},
+  {ts:'2026-06-13 09:30:22',user:'System',role:'Automated',action:'Expiry Reminder Sent',entity:'89 members expiring soon',ip:'127.0.0.1',result:'success'},
+  {ts:'2026-06-13 08:15:44',user:'Mohammed Salem',role:'Sales Rep',action:'Lead Status Changed',entity:'Khalid Nasser → Trial',ip:'192.168.1.130',result:'success'},
+];
+
+const expiringMembers = [
+  {name:'Noor Salem',plan:'Basic Monthly',expires:'Jun 15, 2026',value:'SAR 180',status:'expiring'},
+  {name:'Ali Hassan',plan:'Premium Annual',expires:'Jun 16, 2026',value:'SAR 2,400',status:'expiring'},
+  {name:'Rania Khalid',plan:'Standard Monthly',expires:'Jun 17, 2026',value:'SAR 280',status:'expiring'},
+  {name:'Tariq Al-Ghamdi',plan:'Premium Annual',expires:'Jun 18, 2026',value:'SAR 2,400',status:'expiring'},
+  {name:'Maha Salim',plan:'Basic Monthly',expires:'Jun 19, 2026',value:'SAR 180',status:'expiring'},
+];
+
+const products = [
+  {name:'Whey Protein 2kg',price:280,cat:'Supplements',icon:'🥛',stock:8},
+  {name:'Pre-workout C4',price:195,cat:'Supplements',icon:'⚡',stock:24},
+  {name:'GymOS T-Shirt',price:89,cat:'Apparel',icon:'👕',stock:45},
+  {name:'BCAA 300g',price:155,cat:'Supplements',icon:'💊',stock:0},
+  {name:'Lifting Gloves',price:140,cat:'Equipment',icon:'🧤',stock:18},
+  {name:'Performance Shorts',price:120,cat:'Apparel',icon:'🩳',stock:3},
+  {name:'Water Bottle 1L',price:55,cat:'Accessories',icon:'💧',stock:32},
+  {name:'Resistance Bands',price:85,cat:'Equipment',icon:'🏋️',stock:12},
+  {name:'Protein Bar Box',price:65,cat:'Supplements',icon:'🍫',stock:30},
+];
+
+const branches = [
+  {name:'Al Malaz Branch',city:'Riyadh',manager:'Omar Rashid',members:847,revenue:'SAR 212,400',status:'active',util:85},
+  {name:'Al Olaya Branch',city:'Riyadh',manager:'Sara Mohammed',members:623,revenue:'SAR 156,800',status:'active',util:72},
+  {name:'Jeddah Main',city:'Jeddah',manager:'Hassan Al-Farsi',members:512,revenue:'SAR 128,000',status:'active',util:64},
+  {name:'Dammam East',city:'Dammam',manager:'Nadia Al-Qahtani',members:384,revenue:'SAR 96,200',status:'active',util:48},
+  {name:'Khobar Waterfront',city:'Al Khobar',manager:'Faisal Al-Nasser',members:288,revenue:'SAR 72,000',status:'active',util:36},
+  {name:'Medina Branch',city:'Medina',manager:'TBD',members:0,revenue:'—',status:'opening',util:0},
+];
+
+let cart = [];
+let charts = {};
+
+// ===================== NAVIGATION =====================
+function showPage(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const target = document.getElementById('page-' + page);
+  if (target) target.classList.add('active');
+  if (el) el.classList.add('active');
+  const titles = {dashboard:'Dashboard',members:'Members',memberships:'Memberships',billing:'Billing',pos:'Point of Sale',inventory:'Inventory',attendance:'Attendance',crm:'CRM',staff:'Staff',payroll:'Payroll',scheduling:'Scheduling',marketing:'Marketing',reports:'Reports',branches:'Branches',settings:'Settings',audit:'Audit Log'};
+  document.getElementById('page-title').textContent = titles[page] || page;
+  setTimeout(() => initPageCharts(page), 50);
+}
+
+// ===================== MODALS =====================
+function showModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); });
+});
+
+// ===================== TOAST =====================
+function showToast(msg, type='success') {
+  const icons = {success:'✅',info:'ℹ️',warning:'⚠️',danger:'❌'};
+  const colors = {success:'var(--success)',info:'var(--info)',warning:'var(--warning)',danger:'var(--danger)'};
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span class="toast-icon">${icons[type]||'✅'}</span><span style="color:var(--text0)">${msg}</span>`;
+  t.style.borderLeft = `3px solid ${colors[type]||colors.success}`;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+// ===================== TABS =====================
+function switchTab(btn, tabId) {
+  const parent = btn.closest('.page-tabs') || btn.parentElement;
+  parent.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+function switchChart(btn, type) {
+  btn.closest('.chart-tabs').querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ===================== TABLES =====================
+function renderMembersTable(data) {
+  const statusBadge = s => ({active:'badge-success',frozen:'badge-warning',expired:'badge-danger',suspended:'badge-danger'}[s]||'badge-gray');
+  document.getElementById('membersTable').innerHTML = data.map(m => `
+    <tr>
+      <td><input type="checkbox"/></td>
+      <td><div class="fw600">${m.name}</div><div class="text-muted fs11">${m.id} · ${m.phone}</div></td>
+      <td><span class="badge badge-purple">${m.plan}</span></td>
+      <td><span class="badge ${statusBadge(m.status)}">${m.status}</span></td>
+      <td>${m.checkins}</td>
+      <td>${m.balance > 0 ? '<span class="text-danger">SAR '+m.balance+'</span>' : '<span class="text-success">Paid</span>'}</td>
+      <td class="text-muted">${m.joined}</td>
+      <td class="${m.status==='expired'?'text-danger':''}">${m.expires}</td>
+      <td><div class="flex-row" style="gap:4px;">
+        <button class="btn btn-sm" onclick="showToast('Opening member profile...','info')">View</button>
+        <button class="btn btn-sm" onclick="showModal('addMemberModal')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="showToast('Member frozen','warning')">Freeze</button>
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+function filterMembers(q) {
+  const filtered = q ? members.filter(m => m.name.toLowerCase().includes(q.toLowerCase()) || m.id.toLowerCase().includes(q.toLowerCase())) : members;
+  renderMembersTable(filtered);
+}
+
+function renderBillingTable() {
+  const badge = s => ({paid:'badge-success',overdue:'badge-danger',pending:'badge-warning'}[s]||'badge-gray');
+  document.getElementById('billingTable').innerHTML = billingData.map(b => `
+    <tr>
+      <td class="fw600 text-accent">${b.inv}</td>
+      <td>${b.member}</td>
+      <td>${b.plan}</td>
+      <td class="fw600">${b.amount}</td>
+      <td class="${b.status==='overdue'?'text-danger':''}">${b.due}</td>
+      <td><span class="badge ${badge(b.status)}">${b.status}</span></td>
+      <td class="text-muted">${b.method}</td>
+      <td><div class="flex-row" style="gap:4px;">
+        <button class="btn btn-sm" onclick="showToast('Invoice downloaded','success')">PDF</button>
+        ${b.status!=='paid'?'<button class="btn btn-sm btn-success" onclick="showToast(\'Payment recorded\',\'success\')">Record</button>':''}
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+function renderInventoryTable() {
+  const badge = s => ({ok:'badge-success',low:'badge-warning',out:'badge-danger'}[s]||'badge-gray');
+  document.getElementById('inventoryTable').innerHTML = inventoryData.map(i => `
+    <tr>
+      <td class="fs11 text-muted">${i.sku}</td>
+      <td class="fw600">${i.name}</td>
+      <td><span class="badge badge-gray">${i.cat}</span></td>
+      <td class="${i.status==='out'?'text-danger':i.status==='low'?'text-warning':'text-success'} fw600">${i.stock}</td>
+      <td class="text-muted">${i.reorder}</td>
+      <td>SAR ${i.cost}</td>
+      <td class="fw600">SAR ${i.sell}</td>
+      <td><span class="badge ${badge(i.status)}">${i.status==='ok'?'In Stock':i.status==='low'?'Low Stock':'Out of Stock'}</span></td>
+      <td><div class="flex-row" style="gap:4px;">
+        <button class="btn btn-sm" onclick="showToast('Stock adjusted','success')">Adjust</button>
+        <button class="btn btn-sm btn-primary" onclick="showToast('Added to purchase order','info')">Reorder</button>
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+function renderStaffTable() {
+  document.getElementById('staffTable').innerHTML = staffData.map(s => `
+    <tr>
+      <td><div class="fw600">${s.name}</div></td>
+      <td><span class="badge badge-info">${s.role}</span></td>
+      <td class="text-muted">${s.dept}</td>
+      <td class="fs11 text-muted">${s.schedule}</td>
+      <td><span class="badge ${s.status==='present'?'badge-success':'badge-warning'}">${s.status}</span></td>
+      <td><div style="display:flex;align-items:center;gap:6px;">
+        <div class="progress" style="width:60px;margin:0;"><div class="progress-fill" style="width:${s.kpi}%;background:${s.kpi>90?'var(--success)':s.kpi>75?'var(--warning)':'var(--danger)'}"></div></div>
+        <span class="fw600 fs11">${s.kpi}%</span>
+      </div></td>
+      <td><div class="flex-row" style="gap:4px;">
+        <button class="btn btn-sm" onclick="showToast('Opening staff profile','info')">View</button>
+        <button class="btn btn-sm" onclick="showModal('addStaffModal')">Edit</button>
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+function renderExpiringTable() {
+  document.getElementById('expiringTable').innerHTML = expiringMembers.map(m => `
+    <tr>
+      <td class="fw600">${m.name}</td>
+      <td><span class="badge badge-purple">${m.plan}</span></td>
+      <td class="text-warning">${m.expires}</td>
+      <td class="fw600">${m.value}</td>
+      <td><span class="badge badge-warning">Expiring</span></td>
+      <td><div class="flex-row" style="gap:4px;">
+        <button class="btn btn-sm btn-primary" onclick="showToast('Renewal reminder sent','success')">Send Reminder</button>
+        <button class="btn btn-sm btn-success" onclick="showToast('Renewal invoice created','success')">Renew</button>
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+function renderAuditTable() {
+  document.getElementById('auditTable').innerHTML = auditData.map(a => `
+    <tr>
+      <td class="fs11 text-muted">${a.ts}</td>
+      <td class="fw600">${a.user}</td>
+      <td><span class="badge badge-gray">${a.role}</span></td>
+      <td>${a.action}</td>
+      <td class="text-muted fs11">${a.entity}</td>
+      <td class="fs11 text-muted">${a.ip}</td>
+      <td><span class="badge ${a.result==='success'?'badge-success':'badge-danger'}">${a.result}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ===================== CRM PIPELINE =====================
+function renderCRMPipeline() {
+  const colors = {'New Leads':'var(--info)','Contacted':'var(--warning)','Trial':'var(--accent5)','Proposal Sent':'var(--accent)','Won':'var(--success)'};
+  document.getElementById('crmPipeline').innerHTML = Object.entries(crmLeads).map(([stage, leads]) => `
+    <div class="pipe-col">
+      <div class="pipe-header" style="color:${colors[stage]||'var(--text2)'}">
+        <span style="width:8px;height:8px;border-radius:50%;background:${colors[stage]||'var(--text2)'};display:inline-block;"></span>
+        ${stage} <span class="pipe-count">${leads.length}</span>
+      </div>
+      ${leads.map(l => `
+        <div class="pipe-card" onclick="showToast('Opening lead: ${l.name}','info')">
+          <div class="pipe-name">${l.name}</div>
+          <div class="pipe-sub">${l.sub}</div>
+          <div class="pipe-amount">${l.amt}</div>
+          <div class="flex-row mt8" style="gap:4px;">
+            <button class="btn btn-sm" onclick="event.stopPropagation();showToast('Follow-up scheduled','info')" style="font-size:10px;padding:3px 8px;">Follow-up</button>
+            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();showToast('Lead advanced','success')" style="font-size:10px;padding:3px 8px;">→ Advance</button>
+          </div>
+        </div>
+      `).join('')}
+      <button class="btn btn-sm" style="width:100%;margin-top:4px;font-size:11px;" onclick="showModal('addLeadModal')">+ Add</button>
+    </div>
+  `).join('');
+}
+
+// ===================== POS =====================
+function renderProducts() {
+  document.getElementById('productGrid').innerHTML = products.map(p => `
+    <div class="card" style="cursor:pointer;text-align:center;padding:14px;${p.stock===0?'opacity:0.5;cursor:not-allowed;':''}" onclick="${p.stock>0?`addToCart('${p.name}',${p.price})`:'showToast(\"Out of stock\",\"warning\")'}"">
+      <div style="font-size:28px;margin-bottom:8px;">${p.icon}</div>
+      <div class="fw600 fs12 mb8" style="line-height:1.3;">${p.name}</div>
+      <div class="text-accent fw600">SAR ${p.price}</div>
+      <div class="fs11 text-muted mt8">${p.stock===0?'Out of stock':'Stock: '+p.stock}</div>
+    </div>
+  `).join('');
+}
+
+function addToCart(name, price) {
+  const existing = cart.find(c => c.name === name);
+  if(existing) existing.qty++;
+  else cart.push({name, price, qty:1});
+  renderCart();
+  showToast(name + ' added to cart', 'success');
+}
+
+function removeFromCart(name) {
+  cart = cart.filter(c => c.name !== name);
+  renderCart();
+}
+
+function renderCart() {
+  if(cart.length === 0) {
+    document.getElementById('cartItems').innerHTML = '<div class="text-muted fs12" style="text-align:center;margin-top:40px;">Add products to cart</div>';
+    document.getElementById('cartSubtotal').textContent = 'SAR 0.00';
+    document.getElementById('cartTax').textContent = 'SAR 0.00';
+    document.getElementById('cartTotal').textContent = 'SAR 0.00';
+    return;
+  }
+  const subtotal = cart.reduce((s,c) => s + c.price * c.qty, 0);
+  const tax = subtotal * 0.15;
+  const total = subtotal + tax;
+  document.getElementById('cartItems').innerHTML = cart.map(c => `
+    <div class="flex-between" style="padding:8px 0;border-bottom:1px solid var(--border);">
+      <div><div class="fw600 fs12">${c.name}</div><div class="fs11 text-muted">SAR ${c.price} × ${c.qty}</div></div>
+      <div class="flex-row" style="gap:8px;">
+        <span class="fw600">SAR ${(c.price*c.qty).toFixed(0)}</span>
+        <button class="btn btn-sm btn-danger" onclick="removeFromCart('${c.name}')" style="font-size:10px;padding:2px 6px;">✕</button>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('cartSubtotal').textContent = 'SAR ' + subtotal.toFixed(2);
+  document.getElementById('cartTax').textContent = 'SAR ' + tax.toFixed(2);
+  document.getElementById('cartTotal').textContent = 'SAR ' + total.toFixed(2);
+}
+
+function checkoutPOS() {
+  if(cart.length === 0) { showToast('Cart is empty','warning'); return; }
+  showToast('Sale completed · Receipt printing...','success');
+  cart = [];
+  renderCart();
+}
+
+// ===================== BRANCHES =====================
+function renderBranches() {
+  document.getElementById('branchCards').innerHTML = branches.map(b => `
+    <div class="card" style="cursor:pointer;" onclick="showToast('Loading ${b.name}...','info')">
+      <div class="flex-between mb16">
+        <div>
+          <div class="fw600 fs14">${b.name}</div>
+          <div class="text-muted fs11">${b.city}</div>
+        </div>
+        <span class="badge ${b.status==='active'?'badge-success':'badge-warning'}">${b.status}</span>
+      </div>
+      <div class="flex-row gap16" style="flex-wrap:wrap;margin-bottom:12px;">
+        <div><div class="text-muted fs11">Members</div><div class="fw600">${b.members.toLocaleString()}</div></div>
+        <div><div class="text-muted fs11">Revenue</div><div class="fw600">${b.revenue}</div></div>
+        <div><div class="text-muted fs11">Manager</div><div class="fw600 fs12">${b.manager}</div></div>
+      </div>
+      <div class="flex-between fs11 text-muted mb8"><span>Utilization</span><span>${b.util}%</span></div>
+      <div class="progress"><div class="progress-fill" style="width:${b.util}%;background:${b.util>75?'var(--success)':b.util>50?'var(--accent)':'var(--info)'}"></div></div>
+    </div>
+  `).join('');
+}
+
+// ===================== SCHEDULING =====================
+function renderSchedule() {
+  const hours = ['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
+  const classes = [
+    {time:'09:00',name:'CrossFit WOD',trainer:'Ali Hassan',room:'Main Floor',cap:'18/20',color:'var(--accent)'},
+    {time:'11:00',name:'Yoga Flow',trainer:'Sara Ahmed',room:'Studio A',cap:'8/15',color:'var(--info)'},
+    {time:'13:00',name:'PT Session',trainer:'Omar Khalid',room:'Free Weights',cap:'1/1',color:'var(--success)'},
+    {time:'18:00',name:'HIIT Blast',trainer:'Omar Khalid',room:'Main Floor',cap:'20/20',color:'var(--danger)'},
+    {time:'19:00',name:'Spinning',trainer:'Noor Salem',room:'Spinning Room',cap:'12/25',color:'var(--warning)'},
+  ];
+  document.getElementById('scheduleCalendar').innerHTML = `
+    <div class="chart-title mb16">Today's Schedule — ${new Date().toLocaleDateString('en-SA',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${hours.map(h => {
+        const cls = classes.find(c => c.time === h);
+        return cls ? `
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="text-muted fs11" style="width:40px;flex-shrink:0;">${h}</span>
+            <div style="flex:1;background:${cls.color}22;border-left:3px solid ${cls.color};border-radius:0 6px 6px 0;padding:8px 12px;cursor:pointer;" onclick="showModal('addClassModal')">
+              <div class="fw600 fs12" style="color:${cls.color}">${cls.name}</div>
+              <div class="fs11 text-muted">${cls.trainer} · ${cls.room} · ${cls.cap}</div>
+            </div>
+          </div>
+        ` : `
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="text-muted fs11" style="width:40px;flex-shrink:0;">${h}</span>
+            <div style="flex:1;height:2px;border-top:1px dashed var(--border);"></div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ===================== CHECKIN LOG =====================
+function renderCheckinLog() {
+  const entries = [
+    {name:'Ahmed Al-Rashid',id:'M-001',method:'QR',time:'10:42',type:'in'},
+    {name:'Sara Mohammed',id:'M-006',method:'RFID',time:'10:38',type:'in'},
+    {name:'Omar Khalid',id:'M-003',method:'QR',time:'10:22',type:'out'},
+    {name:'Maha Al-Ghamdi',id:'M-008',method:'PIN',time:'10:15',type:'in'},
+    {name:'Fatima Hassan',id:'M-002',method:'QR',time:'09:58',type:'in'},
+  ];
+  document.getElementById('checkinLog').innerHTML = entries.map(e => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div class="avatar" style="width:32px;height:32px;font-size:11px;background:${e.type==='in'?'rgba(0,229,160,0.2)':'rgba(255,107,107,0.2)'};color:${e.type==='in'?'var(--success)':'var(--danger)'};">${e.name.split(' ').map(n=>n[0]).join('')}</div>
+      <div style="flex:1;">
+        <div class="fw600 fs12">${e.name}</div>
+        <div class="fs11 text-muted">${e.id} · ${e.method}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="fs11 ${e.type==='in'?'text-success':'text-danger'}">${e.type==='in'?'↗ In':'↙ Out'}</div>
+        <div class="fs11 text-muted">${e.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===================== HEATMAP =====================
+function renderHeatmap() {
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const hourLabels = ['6am','9am','12pm','3pm','6pm','9pm'];
+  const data = days.map(() => Array.from({length:16}, () => Math.floor(Math.random()*80)));
+  const peak = d => d > 60 ? 4 : d > 40 ? 3 : d > 20 ? 2 : d > 5 ? 1 : 0;
+  const fills = ['var(--bg4)','rgba(108,99,255,0.2)','rgba(108,99,255,0.45)','rgba(108,99,255,0.7)','var(--accent)'];
+  const wrap = document.getElementById('heatmapContainer');
+  wrap.innerHTML = `
+    <div style="display:flex;gap:4px;margin-bottom:4px;padding-left:32px;">
+      ${hourLabels.map(l => `<span style="flex:1;font-size:9px;color:var(--text2);text-align:center;">${l}</span>`).join('')}
+    </div>
+    ${days.map((d,di) => `
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
+        <span style="width:28px;font-size:9px;color:var(--text2);flex-shrink:0;">${d}</span>
+        <div style="display:grid;grid-template-columns:repeat(16,1fr);gap:3px;flex:1;">
+          ${data[di].map(v => `<div class="hm-cell" style="background:${fills[peak(v)]};"></div>`).join('')}
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
+// ===================== CHARTS =====================
+function mkChart(id, cfg) {
+  if(charts[id]) { charts[id].destroy(); }
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  charts[id] = new Chart(ctx, cfg);
+}
+
+function initPageCharts(page) {
+  if(page==='dashboard') initDashboardCharts();
+  if(page==='memberships') initMembershipsChart();
+  if(page==='billing') initBillingCharts();
+  if(page==='attendance') initAttendanceChart();
+  if(page==='payroll') initPayrollChart();
+  if(page==='reports') initReportsCharts();
+}
+
+function initDashboardCharts() {
+  mkChart('revenueChart', {
+    type:'line',
+    data:{
+      labels:['Jan','Feb','Mar','Apr','May','Jun'],
+      datasets:[
+        {label:'Revenue',data:[380000,420000,390000,460000,510000,487200],borderColor:'#6c63ff',backgroundColor:'rgba(108,99,255,0.08)',fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:'#6c63ff'},
+        {label:'Target',data:[400000,400000,440000,440000,480000,500000],borderColor:'rgba(255,255,255,0.2)',borderDash:[5,5],fill:false,tension:0,pointRadius:0}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#636882'},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#636882',callback:v=>'SAR '+(v/1000)+'k'},grid:{color:'rgba(255,255,255,0.04)'}}}}
+  });
+
+  mkChart('membershipChart', {
+    type:'doughnut',
+    data:{
+      labels:['Premium','Standard','Basic','Corporate'],
+      datasets:[{data:[45,31,16,8],backgroundColor:['#6c63ff','#4fc3f7','#00e5a0','#ffc107'],borderWidth:0}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'72%'}
+  });
+
+  mkChart('posChart', {
+    type:'bar',
+    data:{
+      labels:['Supplements','Apparel','Equipment','Accessories'],
+      datasets:[{label:'Sales',data:[2100,1200,620,310],backgroundColor:['#6c63ff','#4fc3f7','#00e5a0','#ffc107'],borderRadius:4}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#636882'},grid:{display:false}},y:{ticks:{color:'#636882',callback:v=>'SAR '+v},grid:{color:'rgba(255,255,255,0.04)'}}}}
+  });
+
+  mkChart('funnelChart', {
+    type:'bar',
+    data:{
+      labels:['New','Contacted','Trial','Proposal'],
+      datasets:[{label:'Leads',data:[6,5,4,3],backgroundColor:['rgba(79,195,247,0.6)','rgba(255,193,7,0.6)','rgba(255,107,107,0.6)','rgba(108,99,255,0.6)'],borderRadius:4,indexAxis:'y'}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#636882',stepSize:1},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#636882'},grid:{display:false}}}}
+  });
+
+  renderHeatmap();
+  renderExpiringTable();
+}
+
+function initMembershipsChart() {
+  mkChart('planChart', {
+    type:'bar',
+    data:{
+      labels:['Premium Annual','Standard Monthly','Basic Monthly','Corporate','Family Pack'],
+      datasets:[
+        {label:'Revenue SAR',data:[3074400,246960,81900,60000,98000],backgroundColor:'rgba(108,99,255,0.7)',borderRadius:4},
+        {label:'Members',data:[1281,882,455,229,280],backgroundColor:'rgba(79,195,247,0.5)',borderRadius:4}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#9ba3c0',font:{size:11}}}},scales:{x:{ticks:{color:'#636882'},grid:{display:false}},y:{ticks:{color:'#636882'},grid:{color:'rgba(255,255,255,0.04)'}}}}
+  });
+}
+
+function initAttendanceChart() {
+  mkChart('attendanceChart', {
+    type:'bar',
+    data:{
+      labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets:[{
+        label:'Check-ins',
+        data:[298,312,287,334,367,421,347],
+        backgroundColor:labels => labels.dataIndex === 6 ? '#6c63ff' : 'rgba(108,99,255,0.4)',
+        borderRadius:4
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#636882'},grid:{display:false}},y:{ticks:{color:'#636882'},grid:{color:'rgba(255,255,255,0.04)'}}}}
+  });
+}
+
+function initPayrollChart() {
+  mkChart('payrollChart', {
+    type:'bar',
+    data:{
+      labels:['Jan','Feb','Mar','Apr','May','Jun'],
+      datasets:[
+        {label:'Base Salary',data:[168000,168000,172000,172000,180000,184200],backgroundColor:'rgba(108,99,255,0.6)',borderRadius:4},
+        {label:'Commissions',data:[8400,9200,7800,10400,11200,12400],backgroundColor:'rgba(0,229,160,0.6)',borderRadius:4}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#9ba3c0',font:{size:11}}}},scales:{x:{ticks:{color:'#636882'},grid:{display:false}},y:{ticks:{color:'#636882',callback:v=>'SAR '+(v/1000)+'k'},grid:{color:'rgba(255,255,255,0.04)'}}}}
+  });
+}
+
+function initReportsCharts() {
+  mkChart('retentionChart', {
+    type:'line',
+    data:{
+      labels:['Jan','Feb','Mar','Apr','May','Jun'],
+      datasets:[{data:[84,85,86,87,86,87],borderColor:'#00e5a0',backgroundColor:'rgba(0,229,160,0.1)',fill:true,tension:0.4,pointRadius:3}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#636882',font:{size:10}},grid:{display:false}},y:{min:80,max:95,ticks:{color:'#636882',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.04)'}}}}
+  });
+
+  mkChart('branchRevenueChart', {
+    type:'bar',
+    data:{
+      labels:['Al Malaz','Al Olaya','Jeddah','Dammam','Khobar'],
+      datasets:[{data:[212400,156800,128000,96200,72000],backgroundColor:['#6c63ff','#4fc3f7','#00e5a0','#ffc107','#ff6b6b'],borderRadius:4}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#636882',callback:v=>'SAR '+(v/1000)+'k'},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#636882'},grid:{display:false}}}}
+  });
+
+  mkChart('sourceChart', {
+    type:'doughnut',
+    data:{
+      labels:['Referral','Walk-in','Instagram','Google','Other'],
+      datasets:[{data:[34,28,22,12,4],backgroundColor:['#6c63ff','#4fc3f7','#ff6b6b','#00e5a0','#ffc107'],borderWidth:0}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#9ba3c0',font:{size:10},boxWidth:10}}},cutout:'65%'}
+  });
+
+  mkChart('revenueTargetChart', {
+    type:'bar',
+    data:{
+      labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+      datasets:[
+        {label:'Actual',data:[380000,420000,390000,460000,510000,487200,null,null,null,null,null,null],backgroundColor:'rgba(108,99,255,0.7)',borderRadius:4},
+        {label:'Target',data:[400000,410000,430000,440000,480000,490000,500000,510000,520000,530000,540000,560000],backgroundColor:'rgba(255,255,255,0.1)',borderRadius:4}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#9ba3c0',font:{size:11}}}},scales:{x:{ticks:{color:'#636882'},grid:{display:false}},y:{ticks:{color:'#636882',callback:v=>'SAR '+(v/1000)+'k'},grid:{color:'rgba(255,255,255,0.04)'}}}}
+  });
+
+  mkChart('churnChart', {
+    type:'line',
+    data:{
+      labels:['Jan','Feb','Mar','Apr','May','Jun'],
+      datasets:[{label:'Churn %',data:[5.2,4.8,4.9,4.5,4.2,4.1],borderColor:'#ff6b6b',backgroundColor:'rgba(255,107,107,0.1)',fill:true,tension:0.4,pointRadius:3}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#636882'},grid:{display:false}},y:{ticks:{color:'#636882',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.04)'}}}}
+  });
+}
+
+function addMember() {
+  showToast('Member added successfully · ID: M-2849','success');
+  closeModal('addMemberModal');
+}
+
+// ===================== INIT =====================
+function init() {
+  renderMembersTable(members);
+  renderBillingTable();
+  renderInventoryTable();
+  renderStaffTable();
+  renderCRMPipeline();
+  renderProducts();
+  renderCart();
+  renderBranches();
+  renderSchedule();
+  renderCheckinLog();
+  renderHeatmap();
+  setTimeout(initDashboardCharts, 100);
+
+  // Live check-in updates
+  const names = ['Abdullah Al-Fahad','Rania Khalid','Tariq Hassan','Mona Salem','Yusuf Al-Otaibi'];
+  let idx = 0;
+  setInterval(() => {
+    const el = document.getElementById('checkinLog');
+    if(!el) return;
+    const name = names[idx % names.length];
+    idx++;
+    const newEntry = document.createElement('div');
+    newEntry.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);background:rgba(0,229,160,0.05);border-radius:4px;margin-bottom:2px;transition:background 1s;';
+    newEntry.innerHTML = `<div class="avatar" style="width:32px;height:32px;font-size:11px;background:rgba(0,229,160,0.2);color:var(--success);">★</div><div style="flex:1;"><div class="fw600 fs12">${name}</div><div class="fs11 text-muted">QR Check-in</div></div><div style="text-align:right;"><div class="fs11 text-success">↗ In</div><div class="fs11 text-muted">Now</div></div>`;
+    el.insertBefore(newEntry, el.firstChild);
+    setTimeout(() => newEntry.style.background = 'transparent', 2000);
+  }, 8000);
+
+  // Live KPI updates
+  setInterval(() => {
+    const els = document.querySelectorAll('.card-value');
+    // minor fluctuation on first card
+  }, 30000);
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
