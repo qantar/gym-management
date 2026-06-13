@@ -10,3 +10,5 @@ from app.models.staff import Staff, StaffAttendance
 from app.models.inventory import Product, StockMovement, PurchaseOrder
 from app.models.class_schedule import ClassSchedule, ClassBooking
 from app.models.audit import AuditLog
+
+from app.models.pos import Sale, SaleItem

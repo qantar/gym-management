@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import (
+    pos,
     auth, users, members, memberships, invoices,
     attendance, leads, staff, inventory, schedules,
     branches, reports, dashboard
@@ -20,3 +21,4 @@ api_router.include_router(schedules.router, prefix="/schedules", tags=["Scheduli
 api_router.include_router(branches.router, prefix="/branches", tags=["Branches"])
 api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
+api_router.include_router(pos.router, prefix="/pos", tags=["POS"])

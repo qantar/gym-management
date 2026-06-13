@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    height:300px; background:#0f1117; color:#f0f2ff;
+    font-family:-apple-system,BlinkMacSystemFont,"Inter",sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:16px; border-radius:12px;
+    border:1px solid rgba(255,255,255,0.1); overflow:hidden;
+  }
+  .logo { width:56px; height:56px; background:#6c63ff; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; }
+  .title { font-size:20px; font-weight:600; }
+  .sub { font-size:12px; color:#636882; }
+  .bar-wrap { width:260px; height:4px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; }
+  .bar { height:4px; background:#6c63ff; border-radius:2px; transition:width 0.4s ease; width:5%; }
+  .status { font-size:11px; color:#636882; min-height:16px; }
+</style>
+</head>
+<body>
+  <div class="logo">G</div>
+  <div class="title">GymOS Enterprise</div>
+  <div class="sub">Initializing services…</div>
+  <div class="bar-wrap"><div class="bar" id="bar"></div></div>
+  <div class="status" id="status">Starting…</div>
+  <script>
+    const { ipcRenderer } = require('electron')
+    ipcRenderer.on('status', (_, { msg, pct }) => {
+      document.getElementById('status').textContent = msg
+      document.getElementById('bar').style.width = pct + '%'
+    })
+  </script>
+</body>
+</html>

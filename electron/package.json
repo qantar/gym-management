@@ -1,0 +1,59 @@
+{
+  "name": "gymos-enterprise",
+  "version": "1.0.0",
+  "description": "GymOS Enterprise Desktop",
+  "main": "src/main.js",
+  "scripts": {
+    "start":      "electron .",
+    "dev":        "ELECTRON_START_URL=http://localhost:5173 electron .",
+    "build:win":  "electron-builder --win",
+    "build:mac":  "electron-builder --mac",
+    "build:linux":"electron-builder --linux",
+    "build:all":  "electron-builder -mwl"
+  },
+  "build": {
+    "appId": "sa.gymos.enterprise",
+    "productName": "GymOS Enterprise",
+    "copyright": "Copyright © 2026 GymOS",
+    "directories": { "output": "dist", "buildResources": "assets" },
+    "files": ["src/**/*", "assets/**/*", "node_modules/**/*"],
+    "extraFiles": [
+      { "from": "../backend",  "to": "backend",  "filter": ["**/*", "!**/__pycache__/**", "!**/*.pyc"] },
+      { "from": "../frontend/dist", "to": "frontend/dist", "filter": ["**/*"] }
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "assets/icon.ico",
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.business"
+    },
+    "linux": {
+      "target": [{ "target": "AppImage", "arch": ["x64"] }],
+      "icon": "assets/icon.png",
+      "category": "Office"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "GymOS Enterprise",
+      "runAfterFinish": true,
+      "perMachine": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.3.0"
+  }
+}
