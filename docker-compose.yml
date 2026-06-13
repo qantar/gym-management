@@ -6,34 +6,45 @@ services:
     container_name: gymos_postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-gymos}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gymos_secret}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gymos_secret_change_me}
       POSTGRES_DB: ${POSTGRES_DB:-gymos}
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gymos"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gymos} -d ${POSTGRES_DB:-gymos}"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
     restart: unless-stopped
+    networks:
+      - gymos_net
 
   redis:
     image: redis:7-alpine
     container_name: gymos_redis
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_secret}
-    ports:
-      - "6379:6379"
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-redis_secret_change_me}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
     volumes:
       - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secret_change_me}", "ping"]
+      interval: 5s
+      timeout: 3s
       retries: 5
     restart: unless-stopped
+    networks:
+      - gymos_net
 
   backend:
     build:
@@ -41,15 +52,16 @@ services:
       dockerfile: Dockerfile
     container_name: gymos_backend
     environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-gymos}:${POSTGRES_PASSWORD:-gymos_secret}@postgres:5432/${POSTGRES_DB:-gymos}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
-      SECRET_KEY: ${SECRET_KEY:-supersecretkey_change_in_production}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-gymos}:${POSTGRES_PASSWORD:-gymos_secret_change_me}@postgres:5432/${POSTGRES_DB:-gymos}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secret_change_me}@redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-dev_secret_key_change_in_production_min_32_chars_abc123}
       ALGORITHM: HS256
-      ACCESS_TOKEN_EXPIRE_MINUTES: 30
-      REFRESH_TOKEN_EXPIRE_DAYS: 7
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
       ENVIRONMENT: ${ENVIRONMENT:-development}
+      ALLOWED_ORIGINS: '["http://localhost:5173","http://localhost:3000","app://localhost"]'
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -58,7 +70,16 @@ services:
     volumes:
       - ./backend:/app
       - media_files:/app/media
+      - backend_cache:/root/.cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
+    networks:
+      - gymos_net
 
   frontend:
     build:
@@ -67,18 +88,26 @@ services:
       target: development
     container_name: gymos_frontend
     environment:
-      VITE_API_URL: http://localhost:8000
-      VITE_WS_URL: ws://localhost:8000
+      VITE_API_URL: http://localhost:${BACKEND_PORT:-8000}
+      VITE_WS_URL: ws://localhost:${BACKEND_PORT:-8000}
     ports:
-      - "5173:5173"
+      - "${FRONTEND_PORT:-5173}:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
+    networks:
+      - gymos_net
+
+networks:
+  gymos_net:
+    driver: bridge
 
 volumes:
   postgres_data:
   redis_data:
   media_files:
+  backend_cache:

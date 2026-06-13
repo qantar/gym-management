@@ -153,7 +153,8 @@ async function startDocker() {
     : path.join(process.resourcesPath, '../docker-compose.yml')
 
   return new Promise((resolve, reject) => {
-    dockerProcess = spawn('docker', ['compose', '-f', composeFile, 'up', '-d', '--wait'], {
+    const isWindows = process.platform === 'win32'
+    dockerProcess = spawn(isWindows ? 'docker.exe' : 'docker', ['compose', '-f', composeFile, 'up', '-d'], {
       stdio: ['ignore', 'pipe', 'pipe'],
     })
     dockerProcess.stdout.on('data', d => sendSplashStatus(d.toString().trim().slice(0, 60), 30))
@@ -220,7 +221,7 @@ app.on('activate', () => { if (!mainWindow) createMainWindow() })
 app.on('before-quit', () => {
   backendProcess?.kill()
   if (!isDev) {
-    try { execSync('docker compose down') } catch {}
+    try { execSync(process.platform === 'win32' ? 'docker compose down' : 'docker compose down') } catch {}
   }
 })
 

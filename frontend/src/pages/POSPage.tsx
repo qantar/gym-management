@@ -290,16 +290,5 @@ export default function POSPage() {
   )
 }
 
-// Extend window type for Electron preload
-declare global {
-  interface Window {
-    gymos?: {
-      printHTML: (html: string) => Promise<void>
-      getVersion: () => Promise<string>
-      minimize: () => void
-      maximize: () => void
-      close: () => void
-      onNavigate: (cb: (route: string) => void) => void
-    }
   }
 }

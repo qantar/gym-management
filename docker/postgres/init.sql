@@ -1,5 +1,8 @@
+-- GymOS PostgreSQL initialization
+-- Extensions (Alembic migrations handle tables)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE EXTENSION IF NOT EXISTS btree_gin;
 
--- Create indexes that will be used frequently
--- (tables created by SQLAlchemy/Alembic on first run)
+-- Set timezone
+SET timezone = 'Asia/Riyadh';

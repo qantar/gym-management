@@ -4,7 +4,7 @@ import { api } from "../lib/api"
 import { Card, KpiCard } from "../components/ui/Card"
 import { Badge } from "../components/ui/Badge"
 import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  AreaChart, Area, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts"
 
